@@ -1,0 +1,586 @@
+#!/bin/bash
+
+t=TODO <<'TODO_TEXT'
+Instal GCC - yum -y install gcc gcc-c++
+Install gmake
+Build gmake
+lua: readline ncurses
+
+TODO_TEXT
+
+n=NOTES <<'NOTES_TEXT'
+OS X Original path '/usr/bin:/bin:/usr/sbin:/sbin'
+Centos 5 original path '/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin'
+
+Lua install
+  yum -y install gcc gcc-c++
+  Fix /etc/ld.so.conf. Add
+    /usr/local/lib
+    /usr/lib64
+    echo '/usr/local/lib' >> /etc/ld.so.conf
+    echo '/usr/lib64' >> /etc/ld.so.conf
+  yum -y install make
+  yum -y install readline-devel
+  ln -s /usr/lib64/libncurses.so.5 /usr/lib64/libncurses.so
+  ldconfig
+NOTES_TEXT
+
+
+BOOTSTRAP_VERSION=0.1
+
+# Constants
+
+TRUE='true'
+FALSE="false"
+OSX='osx'
+LINUX='linux'
+UNKNOWN='unknown'
+
+BOOTSTRAP_INSTALLER_PROXY=${0}_proxy
+BOOTSTRAP_INSTALLER_DEFAULTS_FILENAME=bootstrap_installer.defaults
+BOOTSTRAP_INSTALLER_SETTINGS_FILENAME=bootstrap_installer.settings
+BOOTSTRAP_INSTALLER_SETTINGS_FILENAME=bootstrap_installer.log
+BOOTSTRAP_INSTALLER_TOP_LEVEL_INSTALLATION_DIRECTORY=/opt1
+BOOTSTRAP_INSTALLER_SOURCE_REPOSITORY=http://dl.dropbox.com/u/12189743/InstallationFiles
+
+# BOOTSTRAP_INSTALLER_DIRECTORY=bootstrap_working_directory
+# MOVE_INSTALL_DIRECTORY=$TRUE
+
+# Settings
+GCC_MINIMUM_VERSION_MAJOR=4
+GCC_MINIMUM_VERSION_MINOR=1
+
+#
+# Linux Package Managers
+#
+
+# Redhat-derived
+LINUX_INSTALLER_YUM='yum'
+LINUX_INSTALLER_RPM='rpm'
+# Debian
+LINUX_INSTALLER_APTITUDE='aptitude'
+# Gentoo
+LINUX_INSTALLER_PORTAGE='portage'
+
+
+function dateStamp() {
+  _dateStamp=`date "+%Y-%m-%d %H:%M:%S"`
+}
+
+# Print a message to standard output
+function msg() {
+  dateStamp
+  if [[ X"$1" != X ]] ; then
+    echo "${_dateStamp} ""$1"
+    echo "${_dateStamp} ""$1" >> ${BOOTSTRAP_INSTALLER_SETTINGS_FILENAME}
+  fi
+}
+
+function errorMsg() {
+  if [[ X"$1" != X ]] ; then
+    msg "ERROR: $1"
+  fi
+}
+
+function debugMsg() {
+  if [[ X"$1" != X ]] ; then
+    msg "DEBUG: $1"
+  fi
+}
+
+function infoMsg() {
+  if [[ X"$1" != X ]] ; then
+    msg "INFO: $1"
+  fi
+}
+
+function standardExit() {
+  _exit_code=0
+  _exit_message=$1
+  commonExit
+}
+
+function errorExit() {
+  _exit_code=1
+  _exit_message=$1
+  commonExit
+}
+
+function commonExit() {
+  if [[ X"${_exit_code}" == X ]] ; then
+    _exit_code=0
+  fi
+  if [[ X"${_exit_message}" == X ]] ; then
+    _exit_message=''
+  fi
+  if [[ _exit_code > 0 ]] ; then
+    errorMsg "${_exit_message}"
+  else
+    infoMsg "${_exit_message}"
+  fi
+  exit ${_exit_code}
+}
+
+# Get the current user
+# Returns user name
+function getUser() {
+  _result=`whoami`
+}
+
+# Is the current user root?
+# Returns TRUE if root, FALSE otherwise
+function isUserRoot() {
+  getUser
+  if [[ X"$_result" == Xroot ]] ; then
+    _result=$TRUE
+  else
+    _result=$FALSE
+  fi
+}
+
+# Ensure the script is being run as root
+function ensureUserRoot() {
+  isUserRoot
+  if [[ $_result != $TRUE ]] ; then
+    errorExit "This script must be run as the root user. Exiting ..."
+  fi
+}
+
+# Is the current user root running as sudo?
+# Returns TRUE if root as sudo, FALSE otherwise
+function isUserRootAsSudo() {
+  sudo_root_user=`who am i | cut -f1 -d ' '`
+  getUser
+  current_user=$_result
+  if [[ X"$current_user" == Xroot ]] && [[ X"$sudo_root_user" != Xroot ]] ; then
+    _result=$TRUE
+  else
+    _result=$FALSE
+  fi
+}
+
+# Ensure the script is being run as root running as sudo.
+function ensureUserRootAsSudo() {
+  isUserRootAsSudo
+  if [[ $_result != $TRUE ]] ; then
+    errorExit "This script must be run using 'sudo' from a regular account. Please rerun. Exiting ..."
+  fi
+}
+# Clear any settings saved from last run
+function clearSavedSettings() {
+  if [[ -e ${BOOTSTRAP_INSTALLER_SETTINGS_FILENAME} ]] ; then
+    rm -f ${BOOTSTRAP_INSTALLER_SETTINGS_FILENAME}
+  fi
+}
+
+# Check command-line options
+function checkOptions() {
+  #echo "Num args ${#}"
+  if [[ "$#" == "0" ]]; then
+    return
+  fi
+
+  while (( "$#" )); do
+    case $1 in
+      '-h') 
+          help
+          standardExit
+          ;;
+      '--no-restart')
+          _NO_RESTART=$TRUE
+          ;;
+      '-m')
+          #echo "args left ${#}"
+          if [[ $# < 2 ]] ; then
+            errorMsg "Option -m needs an argument"
+            errorExit
+          else
+            shift
+            _MOVE_INSTALL_DIRECTORY=$1
+            #echo "-m selected arg ${_MOVE_INSTALL_DIRECTORY}"
+            if [[ X"${_MOVE_INSTALL_DIRECTORY}" == Xyes || X"${_MOVE_INSTALL_DIRECTORY}" == XYES ]] ; then
+              MOVE_INSTALL_DIRECTORY=$TRUE
+            fi
+            if [[ X"${_MOVE_INSTALL_DIRECTORY}" == Xno || X"${_MOVE_INSTALL_DIRECTORY}" == XNO ]] ; then
+              MOVE_INSTALL_DIRECTORY=$FALSE
+            fi
+            #echo "MOVE_INSTALL_DIRECTORY ${MOVE_INSTALL_DIRECTORY}"
+          fi
+          ;;
+    esac
+    shift
+  done
+
+}
+
+function help() {
+# By default, this installer will move itself itself into a directory 'bootstrap_installer' in the current directory. 
+# This is equivalent to the command-line option '-m yes'. You can disable this behavior by specifying '-m no' on the command line.
+# BOOTSTRAP_INSTALLER_DIRECTORY=bootstrap_installer
+  
+  read -d '' HELP <<'HELP_TEXT'
+Bootstrap Installer Help
+
+This bootstrap installer will bootstrap an installation environment on RedHat 5, Centos 5 or OS X.
+
+This installer must be run as root or as a sudo user.
+
+When installing components, everything is installed relative to the directory specified by the
+value BOOTSTRAP_INSTALLER_TOP_LEVEL_INSTALLATION_DIRECTORY, by default /opt1. This allows all installed components
+to be removed using a single command - e.g. rm -rf /opt1
+
+To change the default settings for the script, place the settings in a file named "bootstrap_installer.defaults" 
+in the same directory as this file (bootstrap_installer).
+
+Available settings:
+
+BOOTSTRAP_INSTALLER_SETTINGS_FILENAME=bootstrap_installer.settings
+BOOTSTRAP_INSTALLER_SETTINGS_FILENAME=bootstrap_installer.log
+BOOTSTRAP_INSTALLER_TOP_LEVEL_INSTALLATION_DIRECTORY=/opt1
+BOOTSTRAP_INSTALLER_SOURCE_REPOSITORY=http://dl.dropbox.com/u/12189743/InstallationFiles
+
+GCC_MINIMUM_VERSION_MAJOR=4
+GCC_MINIMUM_VERSION_MINOR=1
+
+
+HELP_TEXT
+  echo " "
+  echo "$HELP"
+  echo " "
+}
+
+function startupMsg() {
+  echo "Bootstrap Installer ${BOOTSTRAP_VERSION} - './bootstrap_installer -h' for help"
+  echo " "
+}
+
+
+# Load settings file if present
+# Settings file is named 'bootstrap_installer.settings'
+function loadDefaultSettings() {
+  if [ -e ${BOOTSTRAP_INSTALLER_DEFAULTS_FILENAME} ] ; then
+    echo "Loading settings from ${BOOTSTRAP_INSTALLER_DEFAULTS_FILENAME}"
+    source ${BOOTSTRAP_INSTALLER_DEFAULTS_FILENAME}
+  #else
+    #echo "No settings file (${BOOTSTRAP_INSTALLER_SETTINGS_FILENAME}) found. Skipping .." 
+  fi
+}
+
+# Get the system type
+# Returns 'LINUX', 'OSX' or 'UNKNOWN'
+function getSystemType() {
+  uname -a | grep -q -i linux
+  if [[ $? == 0 ]] ; then
+    _result=$LINUX
+  else
+    uname -a | grep -q -i darwin
+    if [[ $? == 0 ]] ; then
+      _result=$OSX
+    else
+      _result=$UNKNOWN
+    fi
+  fi
+}
+
+
+# Get the Linux installer type
+# Based on the presence of particular installers
+# Returns $LINUX_INSTALLER_YUM, $LINUX_INSTALLER_RPM, $LINUX_INSTALLER_APTITUDE, $LINUX_INSTALLER_PORTAGE or $UNKNOWN
+function getLinuxInstallerType() {
+  isCommandPresent 'yum'
+  if [[ X"$_result" == X$TRUE ]] ; then
+    _result=$LINUX_INSTALLER_YUM
+  else
+    isCommandPresent 'rpm'
+    if [[ X"$_result" == X$TRUE ]] ; then
+      _result=$LINUX_INSTALLER_RPM
+    else
+      isCommandPresent 'aptitude'
+      if [[ X"$_result" == X$TRUE ]] ; then
+        _result=$LINUX_INSTALLER_APTITUDE
+      else
+        isCommandPresent 'emerge'
+        if [[ X"$_result" == X$TRUE ]] ; then
+          _result=$LINUX_INSTALLER_PORTAGE
+        else
+          _result=$UNKNOWN
+        fi
+      fi
+    fi
+  fi
+}
+
+
+# Checks to see if a command is present using 'which'
+# Returns :true if command present :false otherwise
+function isCommandPresent() {
+  if [[ X"$1" == X ]] ; then
+    _result=$FALSE
+  else
+    _cmd="which ${1}"
+    _cmdOutput=`${_cmd}`
+    _cmdStatus=$?
+    if [[ ${_cmdStatus} == 0 ]] ; then
+      _result=$TRUE
+    else
+      _result=$FALSE
+    fi
+  fi
+}
+
+# Install some version of GCC using YUM
+function installGCC_YUM() {
+  infoMsg "Attempting to install GCC using yum"
+  yum -y install gcc gcc-c++
+  _cmdStatus=$?
+  if [[ ${_cmdStatus} != 0 ]] ; then
+    errorMsg "Please install GCC and GCC C++ manually and rerun this installer. Leaving ..."
+    exit 1
+  fi
+}
+
+# Install some version of GCC
+function installGCC() {
+  getSystemType
+  local systemType=$_result
+  if [[ $systemType == $LINUX ]] ; then
+    getLinuxInstallerType
+    local linuxInstallerType=$_result
+    if [[ $linuxInstallerType == $LINUX_INSTALLER_YUM ]] ; then
+      installGCC_YUM  
+    fi
+  else
+    if [[ $systemType == $OSX ]] ; then
+      errorMsg "'gcc' or 'gcc=c++' missing. Please install Developer tools and ensure your system is up to date with all updates installed and rerun this installer. Leaving ..."
+      exit 1
+    fi
+  fi
+}
+
+# Is GGC present at the minimum required version?
+# Returns :true if GCC present at the minimum version, :false otherwise
+function ensureGCCMinimumVersion() {
+  isCommandPresent 'gcc'
+  local gccPresent=${_result}
+  isCommandPresent 'g++'
+  local cppPresent=${_result}
+  if [[ $gccPresent == $TRUE  && $cppPresent == $TRUE ]] ; then
+    local versionString=`gcc --version | awk 'NR == 1 {print $0 }' | cut -f3 -d ' '`
+    local majorVersion=`echo ${versionString} | cut -f1 -d '.'`
+    local minorVersion=`echo ${versionString} | cut -f2 -d '.'`
+    #echo "major ${majorVersion} minor ${minorVersion}"
+    local correctVersion=$FALSE
+    if [[ $majorVersion < $GCC_MINIMUM_VERSION_MAJOR ]] ; then
+      correctVersion=$FALSE
+    else 
+      if [[ $majorVersion == $GCC_MINIMUM_VERSION_MAJOR ]] ; then
+        if [[ $minorVersion < $GCC_MINIMUM_VERSION_MINOR ]] ; then
+          correctVersion=$FALSE
+        else
+          correctVersion=$TRUE
+        fi
+      else
+        correctVersion=$TRUE
+      fi
+    fi
+  fi
+  if [[ $correctVersion == $FALSE ]]; then
+    infoMsg "GCC must be at least at version ${GCC_MINIMUM_VERSION_MAJOR}.${GCC_MINIMUM_VERSION_MINOR}."
+    installGCC
+  fi
+
+}
+
+# Ensure make is present
+function ensureMakePresent() {
+  isCommandPresent 'make'
+  local makePresent=${_result}
+  if [[ $makePresent == $FALSE ]] ; then
+    infoMsg "make is not present. Attempting to install make"
+    installMake
+  fi
+}
+
+# Install make
+function installMake() {
+  getSystemType
+  local systemType=$_result
+  if [[ $systemType == $LINUX ]] ; then
+    getLinuxInstallerType
+    local linuxInstallerType=$_result
+    if [[ $linuxInstallerType == $LINUX_INSTALLER_YUM ]] ; then
+      installMake_YUM  
+    fi
+  else
+    if [[ $systemType == $OSX ]] ; then
+      errorMsg "'make' missing. Please install Developer tools and ensure your system is up to date with all updates installed and rerun this installer. Leaving ..."
+      exit 1
+    fi
+  fi
+}
+
+# Install some version of make using YUM
+function installMake_YUM() {
+  infoMsg "Attempting to install make using yum"
+  yum -y install make
+  _cmdStatus=$?
+  if [[ ${_cmdStatus} != 0 ]] ; then
+    errorMsg "Please install make manually and rerun this installer. Leaving ..."
+    exit 1
+  fi
+}
+
+# Ensure CURL is present - only used to get wget
+function ensureCurlPresent() {
+  isCommandPresent 'curl'
+  local wgetPresent=${_result}
+  if [[ $gccPresent == $FALSE ]] ; then
+    infoMsg "curl is not present. Attempting to install curl"
+    installCurl
+  fi
+}
+
+
+# Install Curl
+function installCurl() {
+  getSystemType
+  local systemType=$_result
+  if [[ $systemType == $LINUX ]] ; then
+    getLinuxInstallerType
+    local linuxInstallerType=$_result
+    if [[ $linuxInstallerType == $LINUX_INSTALLER_YUM ]] ; then
+      installCurl_YUM  
+    fi
+  else
+    if [[ $systemType == $OSX ]] ; then
+      errorMsg "Please install curl manually from sources and rerun this installer. Leaving ..."
+      exit 1
+    fi
+  fi
+}
+
+# Install some version of curl using YUM
+function installCurl_YUM() {
+  infoMsg "Attempting to install curl using yum"
+  yum -y install curl
+  _cmdStatus=$?
+  if [[ ${_cmdStatus} != 0 ]] ; then
+    errorMsg "Please install curl manually and rerun this installer. Leaving ..."
+    exit 1
+  fi
+}
+
+# Ensure wget is present
+function ensureWgetPresent() {
+  isCommandPresent 'wget'
+  local wgetPresent=${_result}
+  if [[ $gccPresent == $FALSE ]] ; then
+    infoMsg "wget is not present. Attempting to install wget"
+    installWget
+  fi
+}
+
+function installGnuPackage() {
+  local baseInstallDir=$1
+  local fileURI=$2
+  local fetchType=$3
+  local fullFileName=$(basename $fileURI)
+  local fileName=${fullFileName%.*}
+  mkdir -p ${baseInstallDir}/src
+  pushd ${baseInstallDir}/src
+  if [[ X${fetchType} == Xcurl ]] ; then
+    curl -o $fullFileName $fileURI
+  fi
+  if [[ X${fetchType} == Xwget ||  X${fetchType} == X ]] ; then
+    wget $fileURI
+  fi
+  # TODO unpack based on extension
+  unpack $fullFileName
+  pushd $fileName
+  ./configure --prefix=$baseInstallDir
+  make
+  make install
+  popd
+  popd
+}
+
+# Unpack an archive
+function unpack() {
+  local fullFileName=$1
+  local result
+  result=`echo ${fullFileName} | grep -c 'gz'`
+  if [[ X"$result" != X0 ]] ; then
+    tar xzf fullFileName
+  fi
+  result=`echo ${fullFileName} | grep -c 'zip'`
+  if [[ X"$result" != X0 ]] ; then
+    unzip fullFileName
+  fi
+}
+
+# Install wget
+function installWget() {
+  installGnuPackage ${BOOTSTRAP_INSTALLER_TOP_LEVEL_INSTALLATION_DIRECTORY} ${BOOTSTRAP_INSTALLER_SOURCE_REPOSITORY}/wget/wget-1.12.tar.gz curl
+}
+
+
+# Install some version of wget using YUM
+function installWget_YUM() {
+  infoMsg "Attempting to install wget using yum"
+  yum -y install wget
+  _cmdStatus=$?
+  if [[ ${_cmdStatus} != 0 ]] ; then
+    errorMsg "Please install wget manually and rerun this installer. Leaving ..."
+    exit 1
+  fi
+}
+
+# Restart this script with an appropriate environment
+function restartWithEnvironment() {
+  if [[ X${_NO_RESTART} == Xtrue ]] ; then
+    return
+  fi
+  infoMsg "Restarting with correct environment"
+  echo "#!/usr/bin/env bash " > ${BOOTSTRAP_INSTALLER_PROXY}
+  echo "echo 'Running proxy'"
+  echo "export PATH="${BOOTSTRAP_INSTALLER_TOP_LEVEL_INSTALLATION_DIRECTORY}":${PATH}" >> ${BOOTSTRAP_INSTALLER_PROXY}
+  echo "echo $PATH"
+  echo "$0 --no-restart" >> ${BOOTSTRAP_INSTALLER_PROXY}
+  chmod a+x ${BOOTSTRAP_INSTALLER_PROXY}
+  exec ./${BOOTSTRAP_INSTALLER_PROXY}
+}
+
+#
+# Bootstrap the system
+#
+
+
+function bootstrap() {
+ 
+  loadDefaultSettings
+  #ensureUserRoot
+  checkOptions $@
+  restartWithEnvironment
+  exit 1
+  
+  clearSavedSettings
+  startupMsg
+  
+  exit 1
+  
+  #getSystemType
+  #echo "System Type "${_result}
+  # getUser
+  # echo "User "${_result}
+  # isUserRoot
+  # echo "Is user root? "${_result}
+  # isUserRootAsSudo
+  # echo "Is user root running under sudo? "${_result}
+  
+  ensureGCCMinimumVersion
+  ensureWgetPresent
+}
+
+bootstrap $@
+
+
