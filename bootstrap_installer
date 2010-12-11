@@ -549,6 +549,7 @@ function restartWithEnvironment() {
   if [[ -e ${BOOTSTRAP_INSTALLER_PROXY} ]] ; then
     rm -rf ${BOOTSTRAP_INSTALLER_PROXY}
   fi
+  updateExternalConfigurations
   infoMsg "Restarting with correct environment PATH=\"${BOOTSTRAP_INSTALLER_TOP_LEVEL_INSTALLATION_DIRECTORY}/bin:${PATH}\"" 
   echo "#!/usr/bin/env bash " > ${BOOTSTRAP_INSTALLER_PROXY}
   echo "export PATH=\"${BOOTSTRAP_INSTALLER_TOP_LEVEL_INSTALLATION_DIRECTORY}/bin:${PATH}\"" >> ${BOOTSTRAP_INSTALLER_PROXY}
@@ -556,6 +557,52 @@ function restartWithEnvironment() {
   chmod a+x ${BOOTSTRAP_INSTALLER_PROXY}
   exec ./${BOOTSTRAP_INSTALLER_PROXY}
 }
+
+# Add configuration information to external locations
+function updateExternalConfigurations() {
+  #ldconf - only add if not present in file but present in system - /usr/local/lib , /usr/lib64 
+  #profile Installation/bin
+  addBinDirToUserProfile
+}
+
+# Add INSTALLATION bin directory to suitable user profile
+function addBinDirToUserProfile() {
+  local bashProfile=${HOME}/.bash_profile
+  local dotProfile=${HOME}/.profile
+  if [[ -e $bashProfile ]] ; then
+    #echo "addBinDirToUserProfile found $bashProfile"
+    addBinDirPathToFile $bashProfile
+  else
+    if [[ -e $dotProfile ]] ; then
+      #echo "addBinDirToUserProfile found $dotProfile"
+      addBinDirPathToFile $dotProfile
+    fi
+  fi
+}
+
+# Add NSTALLATION bin directory to specified file if not present
+function addBinDirPathToFile() {
+  local file=$1
+  local binDir="${BOOTSTRAP_INSTALLER_TOP_LEVEL_INSTALLATION_DIRECTORY}/bin"
+  #echo "addBinDirPathToFile '$file'  '$binDir'"
+  local cmdFile='grep.sh'
+  if [[ X$file != X ]] ; then
+    rm -rf ${cmdFile}
+    echo "#!/usr/bin/env bash" >> ${cmdFile}
+    echo "grep -c '${binDir}' ${file}" >> ${cmdFile}
+    chmod a+x ${cmdFile}
+    #cat ${cmdFile}
+    local grepOut=`./${cmdFile}`
+    #echo "addBinDirPathToFile grepOut ${grepOut}"
+    rm -rf ${cmdFile}
+    if [[ X$grepOut == X0 ]] ; then
+      echo "export PATH=${binDir}:$""{""PATH""}"" # Added by bootstrap_installer" >> ${file}
+      infoMsg "Added the following line to ${file}"
+      msg "export PATH=${binDir}:$""{""PATH""}"" # Added by bootstrap_installer"
+    fi
+  fi
+}
+
 
 #
 # Bootstrap the system
@@ -565,9 +612,9 @@ function restartWithEnvironment() {
 function bootstrap() {
  
   loadDefaultSettings
-  ensureUserRoot
   checkOptions $@
   startupMsg
+  ensureUserRoot
   restartWithEnvironment
   clearSavedSettings
   
@@ -578,6 +625,4 @@ function bootstrap() {
 
 bootstrap $@
 
-# DEBUG
-# installGnuPackage ${BOOTSTRAP_INSTALLER_TOP_LEVEL_INSTALLATION_DIRECTORY} ${BOOTSTRAP_INSTALLER_SOURCE_REPOSITORY}/wget/wget-1.12.tar.gz curl
 

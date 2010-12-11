@@ -27,6 +27,12 @@ h2. Running the installer
 sudo ./bootstrap_installer
 </pre>
 
+To see full help
+
+<pre>
+sudo ./bootstrap_installer -h
+</pre>
+
 h2. Requirements
 
 p. The whole reason for this bootstrap installer is - a bare minimum of requirements
@@ -49,6 +55,7 @@ h2. Other platforms
 
 p. This system should be easy enough to apply to any *nix version. Extend 'getLinuxPlatformType()' in the initial script 'bootstrap_installer'. Then extend the installation methods for gcc, make and curl. Those should be the only system-specific dependences.
 
+h2. Components and builds
 
-
+Anything installed from the source code repository is downloaded, built and remains in ${INSTALLATION_ROOT}/src. INSTALLATION_ROOT by default is /opt1. 
 
