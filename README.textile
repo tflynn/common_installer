@@ -37,7 +37,7 @@ p. The whole reason for this bootstrap installer is - a bare minimum of requirem
 
 p. In practice, the first thing that the system will look for is the GCC compiler. If not present try and install is the GCC compiler using the native installation tools. On OSX the Developer tools must be installed.
 
-p. The installation system uses 'wget'. If 'wget' is not present, the installation system will try to use 'curl' to obtain 'wget'.If neither is present, then the system will attempt to install 'wget' using the native installation tools. This version of 'wget' will then be replaced with the 'reference' version from the installation repository.
+p. The installation system uses 'wget'. If 'wget' is not present, the installation system will try to use 'curl' to obtain 'wget'. If 'curl' is not present, then the system will attempt to install 'curl' using the native installation tools. 'wget' will then be installed from a source package from the installation repository. This is the only potential use of 'curl' by the installation system.
 
 p. Everything else comes from the installation repository.
 
