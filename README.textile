@@ -35,7 +35,7 @@ p. The whole reason for this bootstrap installer is - a bare minimum of requirem
 * Some version of GCC - at least 4.1
 * Some version of curl or wget
 
-p. In practice, the first thing that the system will look for is the GCC compiler. If not present try and install is the GCC compiler using the native installation tools. On OSX the Developer tools must be installed.
+p. In practice, the first thing that the system will look for is the GCC compiler. If not present try and install the GCC compiler using the native installation tools. On OSX the Developer tools must be installed.
 
 p. The installation system uses 'wget'. If 'wget' is not present, the installation system will try to use 'curl' to obtain 'wget'. If 'curl' is not present, then the system will attempt to install 'curl' using the native installation tools. 'wget' will then be installed from a source package from the installation repository. This is the only potential use of 'curl' by the installation system.
 
@@ -47,7 +47,7 @@ p. All the default settings are declared at the start of the file 'bootstrap_ins
 
 h2. Other platforms
 
-p. This system should be easy enough to apply to any *nix version. Extend the GCC installation method 'installGCC()' and maybe 'getLinuxPlatformType()' in the initial script 'bootstrap_installer'. That should be the only system-specific dependency.
+p. This system should be easy enough to apply to any *nix version. Extend 'getLinuxPlatformType()' in the initial script 'bootstrap_installer'. Then extend the installation methods for gcc, make and curl. Those should be the only system-specific dependences.
 
 
 
