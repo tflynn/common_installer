@@ -4,7 +4,9 @@ c=COMMANDS <<'COMMANDS_TEXT'
 mkdir bootstrap
 curl -o  bootstrap_installer http://dl.dropbox.com/u/12189743/InstallationFiles/bootstrap_installer/bootstrap_installer
 wget http://dl.dropbox.com/u/12189743/InstallationFiles/bootstrap_installer/bootstrap_installer
+scp tracy@tracy.dynalias.net:/Users/tracy/Everything/Activities/common_installer/bootstrap_installer .
 chmod a+x bootstrap_installer
+
 COMMANDS_TEXT
 
 t=TODO <<'TODO_TEXT'
@@ -72,7 +74,13 @@ function dateStamp() {
   _dateStamp=`date "+%Y-%m-%d %H:%M:%S"`
 }
 
-# Print a message to standard output
+function msgNoDateStamp() {
+  if [[ X"$1" != X ]] ; then
+    echo "$1"
+    echo "$1" >> ${BOOTSTRAP_INSTALLER_LOG_FILENAME}
+  fi
+}
+
 function msg() {
   dateStamp
   if [[ X"$1" != X ]] ; then
@@ -590,7 +598,7 @@ function addBinDirPathToFile() {
     if [[ X$grepOut == X0 ]] ; then
       echo "export PATH=${binDir}:$""{""PATH""}"" # Added by bootstrap_installer" >> ${file}
       infoMsg "Added the following line to ${file}"
-      msg "export PATH=${binDir}:$""{""PATH""}"" # Added by bootstrap_installer"
+      msgNoDateStamp "export PATH=${binDir}:$""{""PATH""}"" # Added by bootstrap_installer"
     fi
   fi
 }
