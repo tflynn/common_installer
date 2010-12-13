@@ -515,7 +515,6 @@ function installGnuPackage() {
   if [[ X${fetchType} == Xwget ||  X${fetchType} == X ]] ; then
     wget $fileURI
   fi
-  # TODO unpack based on extension
   unpack $fullFileName
   pushd $fileName
   ./configure --prefix=$baseInstallDir
@@ -560,9 +559,8 @@ function restartWithEnvironment() {
 
 # Add configuration information to external locations
 function updateExternalConfigurations() {
-  #ldconf - only add if not present in file but present in system - /usr/local/lib , /usr/lib64 
-  #profile Installation/bin
   addBinDirToUserProfile
+  configureLdconfig
 }
 
 # Add INSTALLATION bin directory to suitable user profile
@@ -587,14 +585,8 @@ function addBinDirPathToFile() {
   #echo "addBinDirPathToFile '$file'  '$binDir'"
   local cmdFile='grep.sh'
   if [[ X$file != X ]] ; then
-    rm -rf ${cmdFile}
-    echo "#!/usr/bin/env bash" >> ${cmdFile}
-    echo "grep -c '${binDir}' ${file}" >> ${cmdFile}
-    chmod a+x ${cmdFile}
-    #cat ${cmdFile}
-    local grepOut=`./${cmdFile}`
-    #echo "addBinDirPathToFile grepOut ${grepOut}"
-    rm -rf ${cmdFile}
+    grepInFile ${binDir} ${file}
+    local grepOut=${_result}
     if [[ X$grepOut == X0 ]] ; then
       echo "export PATH=${binDir}:$""{""PATH""}"" # Added by bootstrap_installer" >> ${file}
       infoMsg "Added the following line to ${file}"
@@ -602,6 +594,131 @@ function addBinDirPathToFile() {
     fi
   fi
 }
+
+# Go find a string in a file using grep
+# Why do it this way? - Because I can't figure out the correct escape sequences for paths like '/opt1/bin' 
+# when they're directly in this file
+function grepInFile() {
+  local pattern=$1
+  local file=$2
+  #echo "grepInFile pattern ${pattern} file ${file}"
+  local cmdFile='grep.sh'
+  if [[ X$pattern != X  && X$file != X ]] ; then
+    rm -rf ${cmdFile}
+    echo "#!/usr/bin/env bash" >> ${cmdFile}
+    echo "grep -c '${pattern}' ${file}" >> ${cmdFile}
+    #cat ${cmdFile}
+    chmod a+x ${cmdFile}
+    _result=`./${cmdFile}`
+    #echo "grepInFile _result ${_result}"
+    rm -rf ${cmdFile}
+  else
+    _result=0
+  fi
+}
+
+# Add appropriate entries to ld.so.conf and rerun ldconfig
+function configureLdconfig() {
+  getSystemType
+  local systemType=$_result
+  if [[ $systemType == $LINUX ]] ; then
+    local libDir="${BOOTSTRAP_INSTALLER_TOP_LEVEL_INSTALLATION_DIRECTORY}/lib"
+    local libDirUsrLocalLib='/usr/local/lib'
+    local libDirUsrLib64='/usr/lib64'
+    local ld_config_so_file='/etc/ld.so.conf'
+    grepInFile ${libDirUsrLocalLib} ${ld_config_so_file}
+    local grepOut=${_result}
+    if [[ X$grepOut == X0 ]] ; then
+      echo ${libDirUsrLocalLib} >> ${ld_config_so_file}
+      infoMsg "Adding ${libDirUsrLocalLib} to ${ld_config_so_file}"
+    fi
+    local cpuType=`uname -a | grep -q -i x86_64`
+    if [[ $? == 0 ]] ; then
+      grepInFile ${libDirUsrLib64} ${ld_config_so_file}
+      local grepOut=${_result}
+      if [[ X$grepOut == X0 ]] ; then
+        echo ${libDirUsrLib64} >> ${ld_config_so_file}
+        infoMsg "Adding ${libDirUsrLib64} to ${ld_config_so_file}"
+      fi
+    fi
+    grepInFile ${libDir} ${ld_config_so_file}
+    local grepOut=${_result}
+    if [[ X$grepOut == X0 ]] ; then
+      echo ${libDir} >> ${ld_config_so_file}
+      infoMsg "Adding ${libDir} to ${ld_config_so_file}"
+    fi
+    local ldconfigBin=`which ldconfig`
+    ${ldconfigBin}
+  fi
+}
+
+# Install Lua dependencies
+function installLuaDependencies() {
+  getSystemType
+  local systemType=$_result
+  if [[ $systemType == $LINUX ]] ; then
+    local cpuType=`uname -a | grep -q -i x86_64`
+    local cpu64=$FALSE
+    if [[ $? == 0 ]] ; then
+      cpu64=$TRUE
+    fi
+    if [[ $cpu64 == $TRUE ]] ; then
+      if [[ -e /usr/lib64/libncurses.so.5 ]] ; then
+        if [[ ! -e /usr/lib64/libncurses.so ]] ; then
+          ln -s /usr/lib64/libncurses.so.5 /usr/lib64/libncurses.so
+          infoMsg "Linking /usr/lib64/libncurses.so.5 to /usr/lib64/libncurses.so"
+        fi
+      fi
+    fi
+    getLinuxInstallerType
+    local linuxInstallerType=$_result
+    if [[ $linuxInstallerType == $LINUX_INSTALLER_YUM ]] ; then
+      local readlineDevelInstalled=`yum list installed | grep readline_devel`
+      if [[ X${readlineDevelInstalled} == X ]] ; then
+        yum -y install readline-devel
+        infoMsg "Installing readline-devel using yum"
+      fi
+    fi
+  fi
+}
+
+# Install Lua
+function installLua() {
+  isCommandPresent 'lua'
+  local luaPresent=${_result}
+  if [[ ${luaPresent} == $FALSE ]] ; then
+    installLuaDependencies
+    local baseInstallDir=${BOOTSTRAP_INSTALLER_TOP_LEVEL_INSTALLATION_DIRECTORY}
+    local fileURI=${BOOTSTRAP_INSTALLER_SOURCE_REPOSITORY}/lua/lua-5.1.4.tar.gz
+    infoMsg "Installing Lua package ${fileURI} to ${baseInstallDir}"
+    local fullFileName=$(basename $fileURI)
+    local fileName=`echo $fullFileName | sed -e 's/.tar.gz//' | sed -e 's/.tgz//' | sed -e 's/.zip//'`
+    #echo "baseInstallDir ${baseInstallDir} fileURI ${fileURI} fetchType ${fetchType} fullFileName ${fullFileName} fileName ${fileName}"
+    mkdir -p ${baseInstallDir}/src
+    pushd ${baseInstallDir}/src
+    rm -rf $fullFileName
+    wget $fileURI
+    unpack $fullFileName
+    pushd $fileName
+    mv Makefile Makefile.bak
+    echo "s%/usr/local%"${baseInstallDir}"%" >pattern.sed
+    sed -f pattern.sed <Makefile.bak >Makefile
+    rm -f pattern.sed
+    getSystemType
+    local systemType=$_result
+    if [[ ${systemType} == $LINUX ]] ; then
+      make linux
+    fi
+    if [[ ${systemType} == $OSX ]] ; then
+      make macosx
+    fi
+    make install
+    popd
+    popd
+  fi
+}
+
+# OS X LD_LIBRARY_PATH DYLD_LIBRARY_PATH
 
 
 #
@@ -621,6 +738,7 @@ function bootstrap() {
   ensureGCCMinimumVersion
   ensureMakePresent
   ensureWgetPresent
+  installLua
 }
 
 bootstrap $@
