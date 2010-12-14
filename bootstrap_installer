@@ -691,7 +691,7 @@ function installLuaDependencies() {
 }
 
 # Install Lua
-function installLua() {
+function ensureLuaPresent() {
   isCommandPresent 'lua'
   local luaPresent=${_result}
   if [[ ${luaPresent} == $FALSE ]] ; then
@@ -723,11 +723,10 @@ function installLua() {
     make install
     popd
     popd
+  else
+    infoMsg "Found lua"
   fi
 }
-
-# OS X LD_LIBRARY_PATH DYLD_LIBRARY_PATH
-
 
 #
 # Bootstrap the system
@@ -746,7 +745,7 @@ function bootstrap() {
   ensureGCCMinimumVersion
   ensureMakePresent
   ensureWgetPresent
-  installLua
+  ensureLuaPresent
 }
 
 bootstrap $@
