@@ -728,6 +728,15 @@ function ensureLuaPresent() {
   fi
 }
 
+function getAndRunLuaInstaller() {
+  infoMsg "Obtaining mainInstaller.lua from ${BOOTSTRAP_INSTALLER_SOURCE_REPOSITORY}/bootstrap_installer/mainInstaller.lua"
+  wget ${BOOTSTRAP_INSTALLER_SOURCE_REPOSITORY}/bootstrap_installer/mainInstaller.lua
+  chmod a+x ./mainInstaller.lua
+  infoMsg "About to run mainInstaller.lua"
+  exec ./mainInstaller.lua
+}
+
+
 #
 # Bootstrap the system
 #
@@ -746,6 +755,7 @@ function bootstrap() {
   ensureMakePresent
   ensureWgetPresent
   ensureLuaPresent
+  getAndRunLuaInstaller
 }
 
 bootstrap $@

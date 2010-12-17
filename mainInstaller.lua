@@ -17,7 +17,7 @@ function remoteRequire(moduleName)
     local status = os.execute(fullCmd)
     if status ~= 0 then
       print("Error: File not found in remote repository " .. remoteRepository[1] .. "/" .. moduleName .. ".lua"  .. '. Exiting ... ')
-      os.exit(1)
+      return nil
     end
   end
   requiredModule = require(moduleName)
@@ -33,7 +33,7 @@ status, result = os.capture(cmd,false)
 print("status = "..status)
 print("result = "..result)
 
-cmd = "which bua"
+cmd = "which lua"
 print(cmd)
 status, result = os.capture(cmd,false)
 print("status = "..status)
