@@ -737,7 +737,9 @@ function getAndRunLuaInstaller() {
   fi
   chmod a+x ./mainInstaller.lua
   infoMsg "About to run mainInstaller.lua"
-  exec ./mainInstaller.lua
+  #TODO pass necessary settings
+  #TODO Pass log name
+  exec ./mainInstaller.lua --logfile ${BOOTSTRAP_INSTALLER_LOG_FILENAME}
 }
 
 

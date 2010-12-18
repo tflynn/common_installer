@@ -24,20 +24,26 @@ function remoteRequire(moduleName)
   return requiredModule
 end
 
+remoteRequire 'commandLine'
 remoteRequire 'osHelpers'
-local ioHelpers = remoteRequire 'ioHelpers'
+remoteRequire 'logger'
+remoteRequire 'ioHelpers'
 
+--[[
 cmd = "echo $SHELL"
 print(cmd)
-status, result = os.capture(cmd,false)
+status, result = osHelpers.capture(cmd)
 print("status = "..status)
 print("result = "..result)
 
 cmd = "which lua"
 print(cmd)
-status, result = os.capture(cmd,false)
+status, result = osHelpers.capture(cmd)
 print("status = "..status)
 print("result = "..result)
+]]
 
 -- response = ioHelpers.readKeyboardWithPrompt('tell me')
 -- print(response)
+
+
