@@ -29,6 +29,11 @@ remoteRequire 'osHelpers'
 remoteRequire 'logger'
 remoteRequire 'ioHelpers'
 
+commandLine.parseOptions(arg)
+logger.addConsoleAppender()
+logger.addFileAppender(commandLine.getLogFileName())
+
+
 --[[
 cmd = "echo $SHELL"
 print(cmd)

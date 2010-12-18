@@ -1,5 +1,7 @@
 #!/usr/bin/env lua
 
+logger = {}
+
 remoteRequire 'commandLine'
 remoteRequire 'osHelpers'
 
@@ -16,9 +18,28 @@ local TYPE_CONSOLE_APPENDER = 'typeConsoleAppender'
 local TYPE_FILE_APPENDER = 'typeFileAppender'
 
 local currentLogLevel = LEVEL_DEBUG
-local currentAppenderTypes = { TYPE_CONSOLE_APPENDER , TYPE_FILE_APPENDER }
+local currentAppenders = { }
+local currentFileName = nil
 
-logger = {}
+function logger.setFileName(fileName)
+    currentFileName = fileName
+end
+
+function logger.getFileName()
+  if currentFileName == nil then
+    currentFileName =  commandLine.getLogFileName()
+  end
+  return currentFileName
+end
+
+function logger.addConsoleAppender()
+  currentAppenders[#currentAppenders + 1] = TYPE_CONSOLE_APPENDER
+end
+
+function logger.addFileAppender(fileName) 
+  logger.setFileName(fileName)
+  currentAppenders[#currentAppenders + 1] = TYPE_FILE_APPENDER
+end
 
 function logger.setTrace()
   currentLogLevel = LEVEL_TRACE
@@ -45,12 +66,26 @@ function logger.setFatal()
 end
 
 
-
 function logger.msg(levelText, msg)
   local status = nil
   local timeStamp = nil
   status, timeStamp = osHelpers.captureAndStrip('date "+%Y-%m-%d %H:%M:%S"')
-  print(timeStamp .. ' ' .. levelText .. ': ' .. msg)
+  local fullMsg = timeStamp .. ' ' .. levelText .. ': ' .. msg
+  if #currentAppenders == 0 then
+    logger.addConsoleAppender()
+  end
+  for currentAppenderId = 1 , #currentAppenders do
+    local currentAppenderType = currentAppenders[currentAppenderId]
+    if currentAppenderType == TYPE_CONSOLE_APPENDER then
+      print(fullMsg)
+    end
+    if currentAppenderType == TYPE_FILE_APPENDER then
+      local logfileName = logger.getFileName()
+      local logFile = assert(io.open(logfileName,'a'),"Unable to open log file " .. logfileName)
+      logFile:write(fullMsg .. "\n")
+      logFile:close()
+    end
+  end
 end
 
 function logger.logMsgAboveLogLevel(logLevel,msg)
