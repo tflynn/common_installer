@@ -1,40 +1,5 @@
 #!/bin/bash
 
-c=COMMANDS <<'COMMANDS_TEXT'
-mkdir bootstrap
-curl -o  bootstrap_installer http://dl.dropbox.com/u/12189743/InstallationFiles/bootstrap_installer/bootstrap_installer
-wget http://dl.dropbox.com/u/12189743/InstallationFiles/bootstrap_installer/bootstrap_installer
-scp tracy@tracy.dynalias.net:/Users/tracy/Everything/Activities/common_installer/bootstrap_installer .
-chmod a+x bootstrap_installer
-
-COMMANDS_TEXT
-
-t=TODO <<'TODO_TEXT'
-Instal GCC - yum -y install gcc gcc-c++
-Install gmake
-Build gmake
-lua: readline ncurses
-
-TODO_TEXT
-
-n=NOTES <<'NOTES_TEXT'
-OS X Original path '/usr/bin:/bin:/usr/sbin:/sbin'
-Centos 5 original path '/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin'
-
-Lua install
-  yum -y install gcc gcc-c++
-  Fix /etc/ld.so.conf. Add
-    /usr/local/lib
-    /usr/lib64
-    echo '/usr/local/lib' >> /etc/ld.so.conf
-    echo '/usr/lib64' >> /etc/ld.so.conf
-  yum -y install make
-  yum -y install readline-devel
-  ln -s /usr/lib64/libncurses.so.5 /usr/lib64/libncurses.so
-  ldconfig
-NOTES_TEXT
-
-
 BOOTSTRAP_VERSION=0.1
 
 # Constants

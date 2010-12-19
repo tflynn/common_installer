@@ -33,7 +33,3 @@ remoteRequire 'core'
 
 
 core.runInstaller()
-
-print(core.getUserPackageSelection())
-
-

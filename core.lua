@@ -13,6 +13,8 @@ core = {}
 function core.runInstaller()
   core.initializeInstaller()
   core.loadSettings()
+  local userPackageSelection = core.getUserPackageSelection()
+  core.installPackageComponents(userPackageSelection)
 end
 
 function core.initializeInstaller() 
@@ -45,7 +47,6 @@ function core.getComponentsOptions()
   end
   return allComponentOptions
 end
-
 
 function core.getPackageNames()
   return PACKAGE_NAMES
@@ -82,10 +83,24 @@ function core.getUserPackageSelection()
   local packageNames = core.getPackageNames()
   core.displayInstallationMenuPackages()
   local userPackageSelection = ioHelpers.readKeyboardWithPrompt("\nEnter selection")
+  print('')
   if userPackageSelection == 'X' or userPackageSelection == 'x'  then
     core.normalExit()
   end
   return packageNames[userPackageSelection + 0]
+end
+
+function core.installPackageComponents(packageName)
+  local packageOptions = core.getPackageOptions(packageName)
+  local packageComponents = packageOptions.components
+  for i = 1 , #packageComponents do
+    core.installComponent(packageComponents[i])
+  end
+end
+
+function core.installComponent(componentName)
+  local componentOptions = core.getComponentOptions(componentName) 
+  print("Installing component " .. componentOptions.name)
 end
 
 function core.normalExit()
@@ -93,3 +108,4 @@ function core.normalExit()
 end
 
 return core
+

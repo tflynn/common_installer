@@ -2,6 +2,11 @@
 
 require 'os'
 
+SYSTEM_TYPE_LINUX = 'linux'
+SYSTEM_TYPE_OSX = 'osx'
+SYSTEM_TYPE_UNKNOWN = 'unknown'
+
+
 osHelpers = {}
 
 
@@ -32,5 +37,23 @@ function osHelpers.captureAndStrip(cmd)
   results = string.gsub(results,"\n","")
   return status, results
 end
+
+function osHelpers.getSystemType()
+  local systemType = nil
+  status, results = osHelpers.captureAndStrip('uname -a | grep -q -i linux')
+  if status == 0 then
+    systemType = SYSTEM_TYPE_LINUX
+  else
+    status, results = osHelpers.captureAndStrip('uname -a | grep -q -i darwin')
+    if status == 0 then
+      systemType = SYSTEM_TYPE_OSX
+    end
+  end
+  if systemType == nil then
+    systemType = SYSTEM_TYPE_UNKNOWN
+  end
+  return systemType
+end
+
 
 return osHelpers
