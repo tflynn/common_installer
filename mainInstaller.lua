@@ -24,31 +24,16 @@ function remoteRequire(moduleName)
   return requiredModule
 end
 
+
 remoteRequire 'commandLine'
 remoteRequire 'osHelpers'
 remoteRequire 'logger'
 remoteRequire 'ioHelpers'
-
-commandLine.parseOptions(arg)
-logger.addConsoleAppender()
-logger.addFileAppender(commandLine.getLogFileName())
+remoteRequire 'core'
 
 
---[[
-cmd = "echo $SHELL"
-print(cmd)
-status, result = osHelpers.capture(cmd)
-print("status = "..status)
-print("result = "..result)
+core.runInstaller()
 
-cmd = "which lua"
-print(cmd)
-status, result = osHelpers.capture(cmd)
-print("status = "..status)
-print("result = "..result)
-]]
-
--- response = ioHelpers.readKeyboardWithPrompt('tell me')
--- print(response)
+print(core.getUserPackageSelection())
 
 
