@@ -33,3 +33,13 @@ remoteRequire 'core'
 
 
 core.runInstaller()
+
+--[[
+function core.testMe()
+  print('not me - someone else central')
+end
+
+local mod = package.loaded['core']
+mod.testMe()
+--]]
+

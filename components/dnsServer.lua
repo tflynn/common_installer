@@ -1,4 +1,17 @@
 #!/usr/bin/env lua
 
-print "Installing dnsServer"
+dnsServer = {}
 
+function dnsServer.preInstall()
+  print "dnsServer.preInstall"
+end
+
+function dnsServer.install()
+  print "dnsServer.install"
+end
+
+function dnsServer.postInstall()
+  print "dnsServer.postInstall"
+end
+
+return dnsServer

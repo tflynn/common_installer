@@ -10,42 +10,42 @@ For example, to override the default installation directory for the component 'a
 
 ]]
 
-COMPONENT_NAMES = {'baseSystem' , 'dnsServer', 'apacheWebServer', 'php5' , 'mysql5' }
+SYSTEM_SETTINGS = {}
+
+MENU_SEPARATOR = '----------'
+
+MENU_ORDER =  { 'baseSystem' , 'dnsServer', 'apacheWebServer', MENU_SEPARATOR , 'php5' , 'mysql5' }
 
 COMPONENT_OPTIONS =  {
   
   baseSystem = {
     name = 'Basic System',
-    defaultInstallationDirectory = nil
+    defaultInstallationDirectory = nil,
+    componentDependencies = nil,
   },
   
   dnsServer = {
     name = 'DHS Server',
-    defaultInstallationDirectory = nil
+    defaultInstallationDirectory = nil ,
+    componentDependencies = { 'baseSystem' , 'apacheWebServer' } ,
   },
   
   apacheWebServer = {
     name = 'Apache Web Server' ,
-    defaultInstallationDirectory = nil
+    defaultInstallationDirectory = nil ,
+    componentDependencies = nil,
   },
   
   php5 = {
     name = 'PHP 5' ,
-    defaultInstallationDirectory = nil
+    defaultInstallationDirectory = nil ,
+    componentDependencies = nil,
   },
   
-  nysql5 = {
+  mysql5 = {
     name = 'MySQL 5' ,
-    defaultInstallationDirectory = nil
+    defaultInstallationDirectory = nil ,
+    componentDependencies = nil,
   },
   
-  
-}
-
-PACKAGE_NAMES = {'dns'}
-
-PACKAGE_OPTIONS = {
-  
-  dns = { name = "DNS Server" , components = { 'baseSystem' , 'apacheWebServer' , 'dnsServer' } },
-      
 }

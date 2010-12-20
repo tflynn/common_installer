@@ -13,8 +13,8 @@ core = {}
 function core.runInstaller()
   core.initializeInstaller()
   core.loadSettings()
-  local userPackageSelection = core.getUserPackageSelection()
-  core.installPackageComponents(userPackageSelection)
+  local userComponentSelection = core.getUserComponentSelection()
+  core.installComponent(userComponentSelection)
 end
 
 function core.initializeInstaller() 
@@ -30,82 +30,64 @@ function core.loadSettings()
   end
 end
 
-function core.getComponentNames()
-  return COMPONENT_NAMES
-end
-
 function core.getComponentOptions(componentName) 
   return COMPONENT_OPTIONS[componentName]
 end
 
-function core.getComponentsOptions()
-  local componentNames = core.getComponentNames()
-  local allComponentOptions = {}
-  for i = 1 , #componentNames do
-    local componentName = componentNames[i]
-    allComponentOptions[i] = core.getComponentOptions(componentName)
-  end
-  return allComponentOptions
-end
-
-function core.getPackageNames()
-  return PACKAGE_NAMES
-end
-
-function core.getPackageOptions(packageName) 
-  return PACKAGE_OPTIONS[packageName]
-end
-
-function core.getPackagesOptions()
-  local packageNames = core.getPackageNames()
-  local allPackageOptions = {}
-  for i = 1 , #packageNames do
-    local packageName = packageNames[i]
-    allPackageOptions[i] = core.getPackageOptions(packageName)
-  end
-  return allPackageOptions
-end
-
-function core.displayInstallationMenuPackages()
-  local packageNames = core.getPackageNames()
-  print "Available Installation Packages\n"
+function core.displayInstallationMenu()
+  print "Available Installation Components\n"
   local menuEntryFormat = '%d. %s'
-  for i = 1 , #packageNames do
-    local packageName = packageNames[i]
-    local packageOptions = core.getPackageOptions(packageName)
-    local menuOption = menuEntryFormat:format(i,packageOptions.name)
-    print(menuOption)
+  local components = {}
+  for i = 1 , #MENU_ORDER do
+    local menuEntry = MENU_ORDER[i]
+    if menuEntry == MENU_SEPARATOR then
+      print(MENU_SEPARATOR)
+    else
+      local componentOptions = core.getComponentOptions(menuEntry)
+      local menuOption = menuEntryFormat:format(#components + 1,componentOptions.name)
+      print(menuOption)
+      components[#components + 1] = menuEntry
+    end
   end
   print("\nX  Exit")
+  return components
 end
 
-function core.getUserPackageSelection() 
-  local packageNames = core.getPackageNames()
-  core.displayInstallationMenuPackages()
-  local userPackageSelection = ioHelpers.readKeyboardWithPrompt("\nEnter selection")
+function core.getUserComponentSelection() 
+  local components = core.displayInstallationMenu()
+  local userComponentSelection = ioHelpers.readKeyboardWithPrompt("\nEnter selection")
   print('')
-  if userPackageSelection == 'X' or userPackageSelection == 'x'  then
+  if userComponentSelection == 'X' or userComponentSelection == 'x'  then
     core.normalExit()
   end
-  return packageNames[userPackageSelection + 0]
-end
-
-function core.installPackageComponents(packageName)
-  local packageOptions = core.getPackageOptions(packageName)
-  local packageComponents = packageOptions.components
-  for i = 1 , #packageComponents do
-    core.installComponent(packageComponents[i])
-  end
+  return components[userComponentSelection + 0]
 end
 
 function core.installComponent(componentName)
   local componentOptions = core.getComponentOptions(componentName) 
   print("Installing component " .. componentOptions.name)
+  
+  local componentDependencies = componentOptions.componentDependencies
+  if componentDependencies ~= nil then
+    for i = 1 , #componentDependencies do
+      local componentDependency = componentDependencies[i]
+      core.installComponent(componentDependency)
+    end
+  end
+  
+  local fullyQualifiedCopmonentName = 'components/' .. componentName
+  require(fullyQualifiedCopmonentName)
+  local currentComponent = package.loaded[fullyQualifiedCopmonentName]
+  currentComponent.preInstall()
+  currentComponent.install()
+  currentComponent.postInstall()
+  
 end
 
 function core.normalExit()
   os.exit(0)
 end
+
 
 return core
 
