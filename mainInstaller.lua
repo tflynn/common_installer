@@ -1,7 +1,7 @@
 #!/usr/bin/env lua
 
 enableRemoteRequire = true
-local remoteRepository = {'http://dl.dropbox.com/u/12189743/InstallationFiles/bootstrap_installer'}
+local remoteRepository = {'http://dl.dropbox.com/u/12189743/InstallationFiles/common_installer'}
 
 require 'os'
 require 'io'
@@ -15,7 +15,13 @@ function remoteRequire(moduleName)
     local cmd = "wget " .. remoteRepository[1] .. "/" .. fullModuleName
     local fullCmd = cmd .. " > /dev/null 2>&1 "
     local status = os.execute(fullCmd)
-    if status ~= 0 then
+    if status == 0 then
+      if string.find(moduleName,'components/') then
+        local strippedModuleName = string.gsub(fullModuleName,'components/','')
+        local cmd = "mv "  .. strippedModuleName .. " components"
+        os.execute(cmd)
+      end
+    else
       print("Error: File not found in remote repository " .. remoteRepository[1] .. "/" .. moduleName .. ".lua"  .. '. Exiting ... ')
       return nil
     end

@@ -694,10 +694,10 @@ function ensureLuaPresent() {
 }
 
 function getAndRunLuaInstaller() {
-  infoMsg "Obtaining mainInstaller.lua from ${BOOTSTRAP_INSTALLER_SOURCE_REPOSITORY}/bootstrap_installer/mainInstaller.lua"
-  wget ${BOOTSTRAP_INSTALLER_SOURCE_REPOSITORY}/bootstrap_installer/mainInstaller.lua
+  infoMsg "Obtaining mainInstaller.lua from ${BOOTSTRAP_INSTALLER_SOURCE_REPOSITORY}/common_installer/mainInstaller.lua"
+  wget ${BOOTSTRAP_INSTALLER_SOURCE_REPOSITORY}/common_installer/mainInstaller.lua
   if [[ $? != 0 ]] ; then
-    errorMsg "Unable to execute command \"wget ${BOOTSTRAP_INSTALLER_SOURCE_REPOSITORY}/bootstrap_installer/mainInstaller.lua\". Leaving ..."
+    errorMsg "Unable to execute command \"wget ${BOOTSTRAP_INSTALLER_SOURCE_REPOSITORY}common_installer/mainInstaller.lua\". Leaving ..."
     exit 1
   fi
   chmod a+x ./mainInstaller.lua

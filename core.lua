@@ -21,6 +21,9 @@ function core.initializeInstaller()
   commandLine.parseOptions(arg)
   logger.addConsoleAppender()
   logger.addFileAppender(commandLine.getLogFileName())
+  if not ioHelpers.fileExists('components') then
+    os.execute('mkdir components')
+  end
 end
 
 function core.loadSettings()
@@ -35,7 +38,7 @@ function core.getComponentOptions(componentName)
 end
 
 function core.displayInstallationMenu()
-  print "Available Installation Components\n"
+  print "\nAvailable Installation Components\n"
   local menuEntryFormat = '%d. %s'
   local components = {}
   for i = 1 , #MENU_ORDER do
@@ -63,6 +66,13 @@ function core.getUserComponentSelection()
   return components[userComponentSelection + 0]
 end
 
+function core.requireComponent(componentName)
+  local fullyQualifiedCopmonentName = 'components/' .. componentName
+  remoteRequire(fullyQualifiedCopmonentName)
+  local currentComponent = package.loaded[fullyQualifiedCopmonentName]
+  return currentComponent
+end
+
 function core.installComponent(componentName)
   local componentOptions = core.getComponentOptions(componentName) 
   print("Installing component " .. componentOptions.name)
@@ -75,12 +85,29 @@ function core.installComponent(componentName)
     end
   end
   
-  local fullyQualifiedCopmonentName = 'components/' .. componentName
-  require(fullyQualifiedCopmonentName)
-  local currentComponent = package.loaded[fullyQualifiedCopmonentName]
-  currentComponent.preInstall()
-  currentComponent.install()
-  currentComponent.postInstall()
+  local currentComponent = core.requireComponent(componentName)
+
+  local preInstall = currentComponent['preInstall']
+  if preInstall ~= nil then
+    preInstall()
+  end
+  local buildType = componentOptions['compomentBuildType']
+  if buildType ~= nil and buildType == BUILD_TYPE_GNU then
+    local overrideComponent = core.requireComponent('gnuBuild')
+    local overrideInstall = overrideComponent['install']
+    if overrideInstall ~= nil then
+      overrideInstall()
+    end
+  else
+    local install = currentComponent['install']
+    if install ~= nil then
+      install()
+    end
+  end
+  local postInstall = currentComponent['postInstall']
+  if postInstall ~= nil then
+    postInstall()
+  end
   
 end
 
@@ -88,6 +115,4 @@ function core.normalExit()
   os.exit(0)
 end
 
-
 return core
-
