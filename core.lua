@@ -21,7 +21,7 @@ function core.initializeInstaller()
   commandLine.parseOptions(arg)
   logger.addConsoleAppender()
   logger.addFileAppender(commandLine.getLogFileName())
-  if not ioHelpers.fileExists('components') then
+    if not ioHelpers.fileExists('components') then
     os.execute('mkdir components')
   end
 end

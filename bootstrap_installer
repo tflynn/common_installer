@@ -538,12 +538,13 @@ function restartWithEnvironment() {
     rm -rf ${BOOTSTRAP_INSTALLER_PROXY}
   fi
   updateExternalConfigurations
-  infoMsg "Restarting with correct environment PATH=\"${BOOTSTRAP_INSTALLER_TOP_LEVEL_INSTALLATION_DIRECTORY}/bin:${PATH}\"" 
   echo "#!/usr/bin/env bash " > ${BOOTSTRAP_INSTALLER_PROXY}
   if [[ ${INSTALLER_EXEC_TYPE} == ${INSTALLER_EXEC_TYPE_JRUBY} ]] ; then
     echo "export PATH=\"${JRUBY_INSTALL_DIR}/bin:${PATH}\"" >> ${BOOTSTRAP_INSTALLER_PROXY}
+    infoMsg "Restarting with correct environment PATH=\"${JRUBY_INSTALL_DIR}/bin:${PATH}\"" 
   else
     echo "export PATH=\"${BOOTSTRAP_INSTALLER_TOP_LEVEL_INSTALLATION_DIRECTORY}/bin:${PATH}\"" >> ${BOOTSTRAP_INSTALLER_PROXY}
+    infoMsg "Restarting with correct environment PATH=\"${BOOTSTRAP_INSTALLER_TOP_LEVEL_INSTALLATION_DIRECTORY}/bin:${PATH}\"" 
   fi
   echo "$0 --bootstrap-phase 2 " >> ${BOOTSTRAP_INSTALLER_PROXY}
   chmod a+x ${BOOTSTRAP_INSTALLER_PROXY}
@@ -759,7 +760,9 @@ function ensureJRubyPresent() {
   fi
   
   # Check Java version
-  local versionString=`java -version | awk 'NR == 1 {print $0 }' | sed -e 's/\"//' | cut -f3 -d ' '`
+  java -version 2>java_version.txt
+  local versionString=`cat java_version.txt | awk 'NR == 1 {print $0 }' | sed -e 's/\"//' | cut -f3 -d ' '`
+  rm java_version.txt
   local majorVersion=`echo ${versionString} | cut -f1 -d '.'`
   local minorVersion=`echo ${versionString} | cut -f2 -d '.'`
   infoMsg "Checking version of java. Found ${majorVersion}.${minorVersion}"
