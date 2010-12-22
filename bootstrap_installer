@@ -34,6 +34,13 @@ LINUX_INSTALLER_APTITUDE='aptitude'
 # Gentoo
 LINUX_INSTALLER_PORTAGE='portage'
 
+# Installer type to exec
+INSTALLER_EXEC_TYPE_LUA='lua'
+INSTALLER_EXEC_TYPE_JRUBY='jruby'
+INSTALLER_EXEC_TYPE=${INSTALLER_EXEC_TYPE_JRUBY}
+
+JRUBY_DIST=jruby-bin-1.5.6.tar.gz
+JRUBY_INSTALL_DIR=/usr/local/jruby-1.5.6
 
 function dateStamp() {
   _dateStamp=`date "+%Y-%m-%d %H:%M:%S"`
@@ -313,6 +320,9 @@ function installGCC() {
     local linuxInstallerType=$_result
     if [[ $linuxInstallerType == $LINUX_INSTALLER_YUM ]] ; then
       installGCC_YUM  
+    else
+      errorMsg "'gcc' or 'gcc=c++' missing. Please install both of these manually and rerun this installer. Leaving ..."
+      exit 1
     fi
   else
     if [[ $systemType == $OSX ]] ; then
@@ -386,6 +396,9 @@ function installMake() {
     local linuxInstallerType=$_result
     if [[ $linuxInstallerType == $LINUX_INSTALLER_YUM ]] ; then
       installMake_YUM  
+    else
+      errorMsg "'make' missing. Please install 'make' manually and rerun this installer. Leaving ..."
+      exit 1
     fi
   else
     if [[ $systemType == $OSX ]] ; then
@@ -430,6 +443,9 @@ function installCurl() {
     local linuxInstallerType=$_result
     if [[ $linuxInstallerType == $LINUX_INSTALLER_YUM ]] ; then
       installCurl_YUM  
+    else
+      errorMsg "Please install curl manually rerun this installer. Leaving ..."
+      exit 1
     fi
   else
     if [[ $systemType == $OSX ]] ; then
@@ -524,7 +540,11 @@ function restartWithEnvironment() {
   updateExternalConfigurations
   infoMsg "Restarting with correct environment PATH=\"${BOOTSTRAP_INSTALLER_TOP_LEVEL_INSTALLATION_DIRECTORY}/bin:${PATH}\"" 
   echo "#!/usr/bin/env bash " > ${BOOTSTRAP_INSTALLER_PROXY}
-  echo "export PATH=\"${BOOTSTRAP_INSTALLER_TOP_LEVEL_INSTALLATION_DIRECTORY}/bin:${PATH}\"" >> ${BOOTSTRAP_INSTALLER_PROXY}
+  if [[ ${INSTALLER_EXEC_TYPE} == ${INSTALLER_EXEC_TYPE_JRUBY} ]] ; then
+    echo "export PATH=\"${JRUBY_INSTALL_DIR}/bin:${PATH}\"" >> ${BOOTSTRAP_INSTALLER_PROXY}
+  else
+    echo "export PATH=\"${BOOTSTRAP_INSTALLER_TOP_LEVEL_INSTALLATION_DIRECTORY}/bin:${PATH}\"" >> ${BOOTSTRAP_INSTALLER_PROXY}
+  fi
   echo "$0 --bootstrap-phase 2 " >> ${BOOTSTRAP_INSTALLER_PROXY}
   chmod a+x ${BOOTSTRAP_INSTALLER_PROXY}
   exec ./${BOOTSTRAP_INSTALLER_PROXY}
@@ -533,7 +553,6 @@ function restartWithEnvironment() {
 # Add configuration information to external locations
 function updateExternalConfigurations() {
   addBinDirToUserProfile
-  configureLdconfig
 }
 
 # Add INSTALLATION bin directory to suitable user profile
@@ -551,7 +570,7 @@ function addBinDirToUserProfile() {
   fi
 }
 
-# Add NSTALLATION bin directory to specified file if not present
+# Add INSTALLATION bin directory to specified file if not present
 function addBinDirPathToFile() {
   local file=$1
   local binDir="${BOOTSTRAP_INSTALLER_TOP_LEVEL_INSTALLATION_DIRECTORY}/bin"
@@ -627,6 +646,7 @@ function configureLdconfig() {
 
 # Install Lua dependencies
 function installLuaDependencies() {
+  configureLdconfig
   getSystemType
   local systemType=$_result
   if [[ $systemType == $LINUX ]] ; then
@@ -651,6 +671,9 @@ function installLuaDependencies() {
         yum -y install readline-devel
         infoMsg "Installing readline-devel using yum"
       fi
+    else
+      errorMsg "Please install readline development libraries manually and rerun this installer"
+      exit 1
     fi
   fi
 }
@@ -703,10 +726,77 @@ function getAndRunLuaInstaller() {
   chmod a+x ./mainInstaller.lua
   infoMsg "About to run mainInstaller.lua"
   #TODO pass necessary settings
-  #TODO Pass log name
   exec ./mainInstaller.lua --logfile ${BOOTSTRAP_INSTALLER_LOG_FILENAME}
 }
 
+function ensureJRubyPresent() {
+  isCommandPresent 'java'
+  local javaPresent=${_result}
+  if [[ ${javaPresent} == $FALSE ]] ; then
+    getSystemType
+    local systemType=$_result
+    if [[ $systemType == $LINUX ]] ; then
+      getLinuxInstallerType
+      local linuxInstallerType=$_result
+      if [[ $linuxInstallerType == $LINUX_INSTALLER_YUM ]] ; then
+        infoMsg "Attempting to install Java using yum"
+        yum -y install java
+        _cmdStatus=$?
+        if [[ ${_cmdStatus} != 0 ]] ; then
+          errorMsg "Please install Java manually and rerun this installer. Leaving ..."
+          exit 1
+        fi
+      else
+        errorMsg "'java' missing. Please install Java 6 (1.6.x) manually and rerun this installer. Leaving ..."
+        exit 1
+      fi
+    else
+      if [[ $systemType == $OSX ]] ; then
+        errorMsg "'java' missing. Please install Developer tools and ensure your system is up to date with all updates installed and rerun this installer. Leaving ..."
+        exit 1
+      fi
+    fi
+  fi
+  
+  # Check Java version
+  local versionString=`java -version | awk 'NR == 1 {print $0 }' | sed -e 's/\"//' | cut -f3 -d ' '`
+  local majorVersion=`echo ${versionString} | cut -f1 -d '.'`
+  local minorVersion=`echo ${versionString} | cut -f2 -d '.'`
+  infoMsg "Checking version of java. Found ${majorVersion}.${minorVersion}"
+  if [[ X${majorVersion} == X1 && X${minorVersion} == X6 ]] ; then
+    infoMsg "Found acceptable version of java (${majorVersion}.${minorVersion})"
+    infoMsg "Installing JRuby package  ${JRUBY_DIST} from ${BOOTSTRAP_INSTALLER_SOURCE_REPOSITORY}/jruby/${JRUBY_DIST}"
+    wget ${BOOTSTRAP_INSTALLER_SOURCE_REPOSITORY}/jruby/${JRUBY_DIST}
+    if [[ $? !=  0 ]] ; then
+      errorMsg "Unable to fetch JRuby from ${BOOTSTRAP_INSTALLER_SOURCE_REPOSITORY}/jruby/${JRUBY_DIST}. Please install JRuby 1.5.6 manually and rerun this installer. Leaving ..."
+      exit 1
+    fi
+    tar xzf ${JRUBY_DIST}
+    if [[ $? !=  0 ]] ; then
+      errorMsg "Unable to unpack ${JRUBY_DIST}. Please install JRuby 1.5.6 manually and rerun this installer. Leaving ..."
+      exit 1
+    fi
+    infoMsg "Moving JRuby to ${JRUBY_INSTALL_DIR}"
+    rm -rf ${JRUBY_INSTALL_DIR}
+    mv jruby-1.5.6 /usr/local
+  else
+    errorMsg "Java 6 (1.6.x) is required but was not found. Please install Java 6 manually and rerun this installer. Leaving ..."
+    exit 1
+  fi
+}
+
+function getAndRunJRubyInstaller() {
+  infoMsg "Obtaining mainInstaller.rb from ${BOOTSTRAP_INSTALLER_SOURCE_REPOSITORY}/common_installer/mainInstaller.rb"
+  wget ${BOOTSTRAP_INSTALLER_SOURCE_REPOSITORY}/common_installer/mainInstaller.rb
+  if [[ $? != 0 ]] ; then
+    errorMsg "Unable to execute command \"wget ${BOOTSTRAP_INSTALLER_SOURCE_REPOSITORY}common_installer/mainInstaller.rb\". Leaving ..."
+    exit 1
+  fi
+  chmod a+x ./mainInstaller.rb
+  infoMsg "About to run mainInstaller.rb"
+  #TODO pass necessary settings
+  exec ./mainInstaller.rb --logfile ${BOOTSTRAP_INSTALLER_LOG_FILENAME}
+}
 
 #
 # Bootstrap the system
@@ -725,8 +815,18 @@ function bootstrap() {
   ensureGCCMinimumVersion
   ensureMakePresent
   ensureWgetPresent
-  ensureLuaPresent
-  getAndRunLuaInstaller
+  if [[ ${INSTALLER_EXEC_TYPE} == ${INSTALLER_EXEC_TYPE_LUA} ]] ; then
+    ensureLuaPresent
+    getAndRunLuaInstaller
+  else
+    if [[ ${INSTALLER_EXEC_TYPE} == ${INSTALLER_EXEC_TYPE_JRUBY} ]] ; then
+      ensureJRubyPresent
+      getAndRunJRubyInstaller
+    else
+      errorMsg "Didn't find any supported installer configured. Leaving ..."
+      exit 1
+    fi
+  fi
 }
 
 bootstrap $@
