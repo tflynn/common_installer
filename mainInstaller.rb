@@ -32,5 +32,6 @@ remoteRequire 'installerLogger'
 remoteRequire 'ioHelpers'
 remoteRequire 'core'
 
+puts "ARGV #{ARGV.inspect}"
 Core.runInstaller
 

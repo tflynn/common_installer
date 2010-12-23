@@ -7,18 +7,13 @@ class CommandLine
   class << self
     
     def parseOptions(args)
-      originalOptions = args
-      continueParsing = true
-      currentArgPosition = 0
-      totalArgs = args.size
       logFileName = DEFAULT_LOG_FILE_NAME
-      while currentArgPosition < totalArgs
-        if args[currentArgPosition] == '--logfile'
-          logFileName = args[currentArgPosition + 1]
-          currentArgPosition = currentArgPosition + 1
-          COMMAND_LINE_OPTIONS[:logFileName] = logFileName
+      while args.size > 0
+        currentArg = args.shift
+        setting, value = currentArg.split('=')
+        if setting == 'logfile'
+          COMMAND_LINE_OPTIONS[:logFileName] = value
         end
-        currentArgPosition = currentArgPosition + 1
       end
 
     end
