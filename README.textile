@@ -9,7 +9,7 @@ p. Currently supported platforms are:
 * OS X
 * Redhat 5 / Centos 5 - any system that uses YUM
 
-p. The system is written as a Bash script - assuming every system has bash - and then in Lua. (http://www.lua.org/) - a small, portable scripting language.
+p. The system is written as a Bash script - assuming every system has bash - and then in Ruby (JRuby).
 
 h2. Running the installer
 
