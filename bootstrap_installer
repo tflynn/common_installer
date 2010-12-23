@@ -36,7 +36,6 @@ JRUBY_INSTALL_DIR=${BOOTSTRAP_INSTALLER_TOP_LEVEL_INSTALLATION_DIRECTORY}/jruby-
 ##############
 
 # Installer type to exec
-INSTALLER_EXEC_TYPE_LUA='lua'
 INSTALLER_EXEC_TYPE_JRUBY='jruby'
 INSTALLER_EXEC_TYPE=${INSTALLER_EXEC_TYPE_JRUBY}
 
@@ -662,90 +661,6 @@ function configureLdconfig() {
   fi
 }
 
-# Install Lua dependencies
-function installLuaDependencies() {
-  configureLdconfig
-  getSystemType
-  local systemType=$_result
-  if [[ $systemType == $LINUX ]] ; then
-    local cpuType=`uname -a | grep -q -i x86_64`
-    local cpu64=$FALSE
-    if [[ $? == 0 ]] ; then
-      cpu64=$TRUE
-    fi
-    if [[ $cpu64 == $TRUE ]] ; then
-      if [[ -e /usr/lib64/libncurses.so.5 ]] ; then
-        if [[ ! -e /usr/lib64/libncurses.so ]] ; then
-          ln -s /usr/lib64/libncurses.so.5 /usr/lib64/libncurses.so
-          infoMsg "Linking /usr/lib64/libncurses.so.5 to /usr/lib64/libncurses.so"
-        fi
-      fi
-    fi
-    getLinuxInstallerType
-    local linuxInstallerType=$_result
-    if [[ $linuxInstallerType == $LINUX_INSTALLER_YUM ]] ; then
-      local readlineDevelInstalled=`yum list installed | grep readline_devel`
-      if [[ X${readlineDevelInstalled} == X ]] ; then
-        yum -y install readline-devel
-        infoMsg "Installing readline-devel using yum"
-      fi
-    else
-      errorMsg "Please install readline development libraries manually and rerun this installer"
-      exit 1
-    fi
-  fi
-}
-
-# Install Lua
-function ensureLuaPresent() {
-  isCommandPresent 'lua'
-  local luaPresent=${_result}
-  if [[ ${luaPresent} == $FALSE ]] ; then
-    installLuaDependencies
-    local baseInstallDir=${BOOTSTRAP_INSTALLER_TOP_LEVEL_INSTALLATION_DIRECTORY}
-    local fileURI=${BOOTSTRAP_INSTALLER_SOURCE_REPOSITORY}/lua/lua-5.1.4.tar.gz
-    infoMsg "Installing Lua package ${fileURI} to ${baseInstallDir}"
-    local fullFileName=$(basename $fileURI)
-    local fileName=`echo $fullFileName | sed -e 's/.tar.gz//' | sed -e 's/.tgz//' | sed -e 's/.zip//'`
-    #echo "baseInstallDir ${baseInstallDir} fileURI ${fileURI} fetchType ${fetchType} fullFileName ${fullFileName} fileName ${fileName}"
-    mkdir -p ${baseInstallDir}/src
-    pushd ${baseInstallDir}/src
-    rm -rf $fullFileName
-    wget $fileURI
-    unpack $fullFileName
-    pushd $fileName
-    mv Makefile Makefile.bak
-    echo "s%/usr/local%"${baseInstallDir}"%" >pattern.sed
-    sed -f pattern.sed <Makefile.bak >Makefile
-    rm -f pattern.sed
-    getSystemType
-    local systemType=$_result
-    if [[ ${systemType} == $LINUX ]] ; then
-      make linux
-    fi
-    if [[ ${systemType} == $OSX ]] ; then
-      make macosx
-    fi
-    make install
-    popd
-    popd
-  else
-    infoMsg "Found lua"
-  fi
-}
-
-function getAndRunLuaInstaller() {
-  infoMsg "Obtaining mainInstaller.lua from ${BOOTSTRAP_INSTALLER_SOURCE_REPOSITORY}/common_installer/mainInstaller.lua"
-  wget ${BOOTSTRAP_INSTALLER_SOURCE_REPOSITORY}/common_installer/mainInstaller.lua
-  if [[ $? != 0 ]] ; then
-    errorMsg "Unable to execute command \"wget ${BOOTSTRAP_INSTALLER_SOURCE_REPOSITORY}common_installer/mainInstaller.lua\". Leaving ..."
-    exit 1
-  fi
-  chmod a+x ./mainInstaller.lua
-  infoMsg "About to run mainInstaller.lua"
-  #TODO pass necessary settings
-  exec ./mainInstaller.lua --logfile ${BOOTSTRAP_INSTALLER_LOG_FILENAME}
-}
 
 function ensureJRubyPresent() {
   isCommandPresent 'java'
