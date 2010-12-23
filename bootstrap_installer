@@ -209,8 +209,10 @@ When installing components, everything is installed relative to the directory sp
 value BOOTSTRAP_INSTALLER_TOP_LEVEL_INSTALLATION_DIRECTORY, by default /opt1. This allows all installed components
 to be removed using a single command - e.g. rm -rf /opt1
 
-To change the default settings for the script, place the settings in a file named "bootstrap_installer.defaults" 
+To change the default settings for the boostrap phase of the installation, place the settings in a file named "bootstrap_installer.defaults" 
 in the same directory as this file (bootstrap_installer).
+
+To include custom settings for the main installer, place the file 'customSettings.rb' in the same directory as this file (bootstrap_installer).
 
 Available settings:
 
@@ -221,9 +223,9 @@ BOOTSTRAP_INSTALLER_SOURCE_REPOSITORY=http://dl.dropbox.com/u/12189743/Installat
 GCC_MINIMUM_VERSION_MAJOR=4
 GCC_MINIMUM_VERSION_MINOR=1
 
-
-JRUBY_DIST=jruby-bin-1.5.6.tar.gz
-JRUBY_INSTALL_DIR=${BOOTSTRAP_INSTALLER_TOP_LEVEL_INSTALLATION_DIRECTORY}/jruby-1.5.6
+JRUBY_VERSION=1.5.6
+JRUBY_DIST=jruby-bin-${JRUBY_VERSION}.tar.gz
+JRUBY_INSTALL_DIR=${BOOTSTRAP_INSTALLER_TOP_LEVEL_INSTALLATION_DIRECTORY}/jruby-${JRUBY_VERSION}
 
 
 HELP_TEXT

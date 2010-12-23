@@ -1,7 +1,5 @@
 #!/usr/bin/env jruby
 
-TEST_ARGV=['--logfile', 'bootstrap_installer.log']
-
 ENABLE_REMOTE_REQUIRE = true
 REMOTE_REPOSITORIES = ['http://dl.dropbox.com/u/12189743/InstallationFiles/common_installer']
 DEFAULT_LOG_FILE_NAME = 'bootstrap_installer.log'
@@ -29,18 +27,10 @@ end
 
 
 remoteRequire 'commandLine'
-# remoteRequire 'osHelpers'
-# remoteRequire 'logger'
-# remoteRequire 'ioHelpers'
-# remoteRequire 'core'
-# 
-# 
-# Core.runInstaller()
+remoteRequire 'osHelpers'
+remoteRequire 'installerLogger'
+remoteRequire 'ioHelpers'
+remoteRequire 'core'
 
-if defined?(TEST_ARGV)
-  puts "mainInstaller TEST_ARGV #{TEST_ARGV.inspect}"
-  CommandLine.parseOptions(TEST_ARGV)
-else
-  CommandLine.parseOptions(ARGV)
-end
+Core.runInstaller
 

@@ -52,7 +52,9 @@ p. Everything else comes from the installation repository.
 
 h2. Default Settings
 
-p. All the default settings are declared at the start of the file 'bootstrap_installer'. If they need to be overridden, place the values in a file 'bootstrap_installer.defaults' in the same directory as 'bootstrap_installer'. They will be loaded as the very first part of the bootstrap process if present.
+p. All the default settings for the bootstrap phase are declared at the start of the file 'bootstrap_installer'. If they need to be overridden, place the values in a file 'bootstrap_installer.defaults' in the same directory as 'bootstrap_installer'. They will be loaded as the very first part of the bootstrap process if present.
+
+p. To include custom settings for the main installer, place the file 'customSettings.rb' in the same directory as the file bootstrap_installer.
 
 h2. Other platforms
 
