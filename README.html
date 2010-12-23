@@ -1,0 +1,131 @@
+<h1>Bootstrap Installer</h1>
+
+
+	<p>A lightweight installation system aimed at installing any of the configured software stacks.</p>
+
+
+	<p>Since there is no mature cross-platform dependency / package manager, the approach used is to build specific versions of software for particular platforms from sources.</p>
+
+
+	<p>Currently supported platforms are:</p>
+
+
+	<ul>
+	<li><span class="caps">OS X</span></li>
+		<li>Redhat 5 / Centos 5 &#8211; any system that uses <span class="caps">YUM</span></li>
+	</ul>
+
+
+	<p>The system is written in two phases:
+	<ul>
+	<li>Phase 1 &#8211; A Bash bootstrap script &#8211; assuming every system has Bash</li>
+		<li>Phase 2 &#8211; The main installer &#8211; written in Ruby (JRuby is installed automatically)</li>
+	</ul></p>
+
+
+	<h2>Running the installer</h2>
+
+
+	<p>A suggestion. Create a new directory and copy the installer script (&#8216;bootstrap_installer&#8217;) into it. The system creates (a few) files for its own use, in particular, the file &#8216;bootstrap_installer.log&#8217; which records all changes to the system.</p>
+
+
+	<p>Obtain a copy of the bootstrap installer &#8211; a single file.</p>
+
+
+	<p>Depending on what&#8217;s already installed on your system, try the following:</p>
+
+
+	<ul>
+	<li>wget http://dl.dropbox.com/u/12189743/InstallationFiles/common_installer/bootstrap_installer</li>
+		<li>curl -o bootstrap_installer http://dl.dropbox.com/u/12189743/InstallationFiles/common_installer/bootstrap_installer</li>
+	</ul>
+
+
+	<p>Then run the following commands:</p>
+
+
+<pre>
+chmod a+x ./bootstrap_installer
+sudo ./bootstrap_installer
+</pre>
+
+	<p>To see full help</p>
+
+
+<pre>
+./bootstrap_installer -h
+</pre>
+
+	<h2>Source packages</h2>
+
+
+	<p>The source package repository is currently managed on a public Dropbox for installation use.</p>
+
+
+	<p>The bootstrap installer files themselves are available from http://dl.dropbox.com/u/12189743/InstallationFiles/bootstrap_installer/bootstrap_installer</p>
+
+
+	<p>The repository can easily be copied to any desired location.</p>
+
+
+	<p>[To be supplied &#8211; can&#8217;t rsync from Dropbox]</p>
+
+
+	<h2>Requirements</h2>
+
+
+	<p>The whole reason for this bootstrap installer is &#8211; a bare minimum of requirements</p>
+
+
+	<p>To actually run the installer you only need</p>
+
+
+	<ul>
+	<li>Bash</li>
+	</ul>
+
+
+	<p>The installer bootstrap then checks for the following requirements, and makes a valiant effort to install them automatically.</p>
+
+
+	<ul>
+	<li>Some version of gcc &#8211; at least 4.1</li>
+		<li>Some version of curl or wget</li>
+		<li>Some version of Java 6 (1.6.x)</li>
+	</ul>
+
+
+	<h3>In detail</h3>
+
+
+	<p>The first thing that the installer bootstrap will look for is the gcc compiler. If not present try and install the gcc compiler using the native installation tools. On <span class="caps">OSX</span> the Developer tools must be installed.</p>
+
+
+	<p>The installer bootstrap uses &#8216;wget&#8217;. If &#8216;wget&#8217; is not present, the installer bootstrap will try to use &#8216;curl&#8217; to obtain &#8216;wget&#8217;. If &#8216;curl&#8217; is not present, then the installer bootstrap will attempt to install &#8216;curl&#8217; using the native installation tools. &#8216;wget&#8217; will then be installed from a source package from the installation repository. This is the only potential use of &#8216;curl&#8217; by the installer bootstrap.</p>
+
+
+	<p>The installer bootstrap then looks for Java 6 (1.6.x). If &#8216;java&#8217; is not present or is not present in the correct version, the installer bootstrap will try and install Java using the native installation tools. On <span class="caps">OSX</span> the Developer tools must be installed.</p>
+
+
+	<p>Everything else comes from the installation repository.</p>
+
+
+	<h2>Default Settings</h2>
+
+
+	<p>All the default settings for the bootstrap phase are declared at the start of the file &#8216;bootstrap_installer&#8217;. If they need to be overridden, place the values in a file &#8216;bootstrap_installer.defaults&#8217; in the same directory as &#8216;bootstrap_installer&#8217;. They will be loaded as the very first part of the bootstrap process if present.</p>
+
+
+	<p>To include custom settings for the main installer, place the file &#8216;customSettings.rb&#8217; in the same directory as the file &#8216;bootstrap_installer&#8217;.</p>
+
+
+	<h2>Other platforms</h2>
+
+
+	<p>This system should be easy enough to apply to any *nix version. Extend &#8216;getLinuxPlatformType()&#8217; in the initial script &#8216;bootstrap_installer&#8217;. Then extend the installation methods for gcc, make, curl and java. Those should be the only system-specific dependences.</p>
+
+
+	<h2>Components and builds</h2>
+
+
+	<p>Anything installed from the source code repository is downloaded, built and remains in ${INSTALLATION_ROOT}/src. <span class="caps">INSTALLATION</span>_ROOT by default is /opt1. This can be changed by modifying the default settings (see above).</p>

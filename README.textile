@@ -9,16 +9,22 @@ p. Currently supported platforms are:
 * OS X
 * Redhat 5 / Centos 5 - any system that uses YUM
 
-p. The system is written as a Bash script - assuming every system has bash - and then in Ruby (JRuby).
+p. The system is written in two phases:
+* Phase 1 - A Bash bootstrap script - assuming every system has Bash
+* Phase 2 - The main installer - written in Ruby (JRuby is installed automatically)
 
 h2. Running the installer
 
 A suggestion. Create a new directory and copy the installer script ('bootstrap_installer') into it. The system creates (a few) files for its own use, in particular, the file 'bootstrap_installer.log' which records all changes to the system.
 
-Depending on what's already installed on your system, try the following (in order):
+Obtain a copy of the bootstrap installer - a single file.
+
+Depending on what's already installed on your system, try the following:
 
 * wget http://dl.dropbox.com/u/12189743/InstallationFiles/common_installer/bootstrap_installer
 * curl -o bootstrap_installer http://dl.dropbox.com/u/12189743/InstallationFiles/common_installer/bootstrap_installer
+ 
+p. Then run the following commands:
 
 <pre>
 chmod a+x ./bootstrap_installer
@@ -46,13 +52,23 @@ h2. Requirements
 
 p. The whole reason for this bootstrap installer is - a bare minimum of requirements
 
+p. To actually run the installer you only need
+
 * Bash
+
+p. The installer bootstrap then checks for the following requirements, and makes a valiant effort to install them automatically.
+
 * Some version of gcc - at least 4.1
 * Some version of curl or wget
+* Some version of Java 6 (1.6.x)
 
-p. In practice, the first thing that the system will look for is the gcc compiler. If not present try and install the gcc compiler using the native installation tools. On OSX the Developer tools must be installed.
+h3. In detail
 
-p. The installation system uses 'wget'. If 'wget' is not present, the installation system will try to use 'curl' to obtain 'wget'. If 'curl' is not present, then the system will attempt to install 'curl' using the native installation tools. 'wget' will then be installed from a source package from the installation repository. This is the only potential use of 'curl' by the installation system.
+p. The first thing that the installer bootstrap will look for is the gcc compiler. If not present try and install the gcc compiler using the native installation tools. On OSX the Developer tools must be installed.
+
+p. The installer bootstrap uses 'wget'. If 'wget' is not present, the installer bootstrap will try to use 'curl' to obtain 'wget'. If 'curl' is not present, then the installer bootstrap will attempt to install 'curl' using the native installation tools. 'wget' will then be installed from a source package from the installation repository. This is the only potential use of 'curl' by the installer bootstrap.
+
+p. The installer bootstrap then looks for Java 6 (1.6.x). If 'java' is not present or is not present in the correct version, the installer bootstrap will try and install Java using the native installation tools. On OSX the Developer tools must be installed.
 
 p. Everything else comes from the installation repository.
 
@@ -60,11 +76,11 @@ h2. Default Settings
 
 p. All the default settings for the bootstrap phase are declared at the start of the file 'bootstrap_installer'. If they need to be overridden, place the values in a file 'bootstrap_installer.defaults' in the same directory as 'bootstrap_installer'. They will be loaded as the very first part of the bootstrap process if present.
 
-p. To include custom settings for the main installer, place the file 'customSettings.rb' in the same directory as the file bootstrap_installer.
+p. To include custom settings for the main installer, place the file 'customSettings.rb' in the same directory as the file 'bootstrap_installer'.
 
 h2. Other platforms
 
-p. This system should be easy enough to apply to any *nix version. Extend 'getLinuxPlatformType()' in the initial script 'bootstrap_installer'. Then extend the installation methods for gcc, make and curl. Those should be the only system-specific dependences.
+p. This system should be easy enough to apply to any *nix version. Extend 'getLinuxPlatformType()' in the initial script 'bootstrap_installer'. Then extend the installation methods for gcc, make, curl and java. Those should be the only system-specific dependences.
 
 h2. Components and builds
 
