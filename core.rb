@@ -26,8 +26,8 @@ class Core
     
     def initializeInstaller 
       CommandLine.parseOptions(ARGV)
-      logger.addConsoleAppender
-      logger.addFileAppender(CommandLine.getLogFileName)
+      # logger.addConsoleAppender
+      # logger.addFileAppender(CommandLine.getLogFileName)
       unless File.exists?('components')
         Kernel.system('mkdir components')
       end
@@ -66,7 +66,7 @@ class Core
       
     end
     
-    def updateExternalSettings
+    def updateExternalSettings(options = {})
       if shouldUpdateExternalSettings?
         puts "Updating external settings"
       else
@@ -173,12 +173,17 @@ class Core
         currentComponent.configure
       end
       
-      updateExternalSettings
+      #TODO make more general and callable from anywhere - probably postinstall
+      #updateExternalSettings
       
     end
     
-    def normalExit()
+    def normalExit
       Kernel.exit(0)
+    end
+
+    def errorExit
+      Kernel.exit(1)
     end
 
     

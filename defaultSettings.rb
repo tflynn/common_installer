@@ -2,7 +2,8 @@
 
 require 'ostruct'
 
-SYSTEM_SETTINGS = OpenStruct.new
+SUCCESS = :success
+FAILURE = :failure
 
 SHELL_STARTUP_FILES = ['/etc/bashrc', '/etc/profile', '~/.bashrc' , '~/.bash_profile']
 
@@ -11,6 +12,8 @@ BUILD_TYPE_GNU = 'gnu'
 
 MENU_ORDER =  ['baseSystem' , 'dnsServer', 'apacheWebServer', MENU_SEPARATOR , 'php5' , 'mysql5' ]
 
+
+SYSTEM_SETTINGS = OpenStruct.new
 
 COMPONENT_OPTIONS = OpenStruct.new
 

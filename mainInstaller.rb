@@ -9,8 +9,10 @@ DEFAULT_LOG_FILE_NAME = 'bootstrap_installer.log'
 def remoteRequire(moduleName)
   fullModuleName = %{#{moduleName}.rb}
   localCopy = File.exists?(fullModuleName)
+  remoteRepository = REMOTE_REPOSITORIES.first
+  fullModuleNameURI = "#{remoteRepository}/#{fullModuleName}"
   if ENABLE_REMOTE_REQUIRE and (not localCopy)
-    cmd = %{wget #{REMOTE_REPOSITORIES.first}/#{fullModuleName}}
+    cmd = %{wget #{fullModuleNameURI}}
     fullCmd = %{#{cmd} > /dev/null 2>&1}
     targetDir = moduleName =~ /components\// ? 'components' : '.'
     success = false
@@ -18,20 +20,27 @@ def remoteRequire(moduleName)
       success = Kernel.system(fullCmd)
     end
     unless success
-      puts(%{Error: File not found in remote repository #{REMOTE_REPOSITORIES.first}/#{moduleName}.rb . Exiting ... })
-      return nil
+      msg = %{Error: File #{fullModuleName} not found at fullModuleNameURI. Exiting ... }
+      if Object.respond_to?(:logger)
+        logger.error(msg)
+      else
+        puts(msg)
+      end
+      Kernel.exit(1)
     end
   end
   require(moduleName)
+  logger.info(%{Obtaining #{fullModuleName} from #{fullModuleNameURI}}) unless localCopy
 end
 
+remoteRequire 'installerLogger'
 
 remoteRequire 'commandLine'
 remoteRequire 'osHelpers'
-remoteRequire 'installerLogger'
 remoteRequire 'ioHelpers'
 remoteRequire 'core'
+remoteRequire 'buildHelper'
 
-puts "ARGV #{ARGV.inspect}"
+#puts "ARGV #{ARGV.inspect}"
 Core.runInstaller
 

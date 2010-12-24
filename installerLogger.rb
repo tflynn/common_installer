@@ -1,8 +1,5 @@
 #!/usr/bin/env jruby
 
-remoteRequire 'commandLine'
-remoteRequire 'osHelpers'
-
 class InstallerLogger
   
   LEVEL_TRACE=0
@@ -21,6 +18,8 @@ class InstallerLogger
     @currentLogLevel = LEVEL_DEBUG
     @currentAppenders = []
     @currentFileName = nil
+    addConsoleAppender
+    addFileAppender(getFileName)
   end
 
   def setFileName(fileName)
@@ -29,7 +28,17 @@ class InstallerLogger
 
   def getFileName
     unless @currentFileName
-      @currentFileName =  CommandLine.getLogFileName
+      @currentFileName = DEFAULT_LOG_FILE_NAME
+      #duplicate CommandLine.getLogFileName to avoid dependency here
+      if ARGV
+        ARGV.each do |arg|
+          if arg =~ /^logfile/
+            option, value = arg.split('=')
+            @currentFileName = value
+            break
+          end
+        end
+      end
     end
     return @currentFileName
   end
