@@ -14,4 +14,8 @@ class GnuBuild
     puts("gnuBuild.postInstall")
   end
   
+  def configure()
+    puts("gnuBuild.configure")
+  end
+  
 end

@@ -14,4 +14,8 @@ class ApacheWebServer
     puts("apacheWebServer.postInstall")
   end
   
+  def configure()
+    puts("apacheWebServer.configure")
+  end
+  
 end

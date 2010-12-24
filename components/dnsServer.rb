@@ -14,4 +14,8 @@ class DnsServer
     puts("dnsServer.postInstall")
   end
   
+  def configure()
+    puts("dnsServer.configure")
+  end
+  
 end

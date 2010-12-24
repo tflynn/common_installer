@@ -25,6 +25,18 @@ class IOHelpers
       return readKeyboard
     end
   
+    def readKeyboardWithPromptYesNo(prompt)
+      while true
+        print(%{#{prompt} [Y/N]: })
+        response = readKeyboard
+        if response =~ /^y.*/i 
+          return true
+        elsif response =~ /^n.*/i 
+          return false
+        end
+      end
+    end
+    
   end
 
 end

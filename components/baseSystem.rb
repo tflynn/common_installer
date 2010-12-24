@@ -3,15 +3,19 @@
 class BaseSystem
   
   def preInstall
-    puts("baseSystempreInstall")
+    puts("baseSystem.preInstall")
   end
 
   def install
-    puts("baseSysteminstall")
+    puts("baseSystem.install")
   end
 
   def postInstall()
-    puts("baseSystempostInstall")
+    puts("baseSystem.postInstall")
+  end
+  
+  def configure()
+    puts("baseSystem.configure")
   end
   
 end
