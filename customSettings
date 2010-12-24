@@ -1,0 +1,11 @@
+
+#
+# This file contains the configuration settings that might typically be modified
+#
+# Uncomment and modify as appropriate
+#
+
+#COMPONENT_OPTIONS.dnsServer.buildInstallationDirectory = '/opt2'
+#COMPONENT_OPTIONS.apacheWebServer.buildInstallationDirectory = nil
+#COMPONENT_OPTIONS.php5.buildInstallationDirectory = nil
+#COMPONENT_OPTIONS.mysql5.buildInstallationDirectory = nil

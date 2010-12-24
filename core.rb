@@ -17,8 +17,10 @@ class Core
       getGlobalUserChoices
       while true
         @@pass_settings = {}
-        userComponentSelection = getUserComponentSelection
-        installComponent(userComponentSelection)
+        userComponentSelections = getUserComponentSelection
+        userComponentSelections.each do | userComponentSelection|
+          installComponent(userComponentSelection)
+        end
       end
     end
     
@@ -42,7 +44,7 @@ class Core
     def getGlobalUserChoices
       puts("\nOptions that apply for all installations\n\n") 
       
-      if SYSTEM_SETTINGS[:modify_shell_startup_file].nil? 
+      if SYSTEM_SETTINGS.modify_shell_startup_file.nil? 
         updateStartupShellsAutomatically = IOHelpers.readKeyboardWithPromptYesNo("Update shell startup files automatically with new PATH and other settings?")
         puts('')
         menuEntryFormat = '%d. Update %s'
@@ -55,10 +57,10 @@ class Core
           end
           userSelection = IOHelpers.readKeyboardWithPrompt("\nEnter selection").to_i
           selected_shell_startup_file = SHELL_STARTUP_FILES[userSelection - 1]
-          SYSTEM_SETTINGS[:modify_shell_startup_file] = selected_shell_startup_file
+          SYSTEM_SETTINGS.modify_shell_startup_file = selected_shell_startup_file
         else
           puts("The system will display and log suggested changes to startup settings.\n\n")
-          SYSTEM_SETTINGS[:modify_shell_startup_file] = 'none'
+          SYSTEM_SETTINGS.modify_shell_startup_file = 'none'
         end
       end
       
@@ -73,7 +75,7 @@ class Core
     end
     
     def shouldUpdateExternalSettings?
-      return (SYSTEM_SETTINGS[:modify_shell_startup_file].nil? or SYSTEM_SETTINGS[:modify_shell_startup_file] == 'none') ? false : true
+      return (SYSTEM_SETTINGS.modify_shell_startup_file.nil? or SYSTEM_SETTINGS.modify_shell_startup_file == 'none') ? false : true
     end
     
     def getComponentOptions(componentName) 
@@ -102,12 +104,21 @@ class Core
     
     def getUserComponentSelection 
       components = displayInstallationMenu
-      userComponentSelection = IOHelpers.readKeyboardWithPrompt("\nEnter selection")
+      userComponentSelection = IOHelpers.readKeyboardWithPrompt("\nEnter selection (separate multiple selections with ',')")
       puts('')
       if userComponentSelection == 'X' or userComponentSelection == 'x'  then
         normalExit
       end
-      return components[userComponentSelection.to_i - 1]
+      selectedComponents = []
+      if userComponentSelection =~ /,/
+        selectedComponentsList = userComponentSelection.split(',')
+        selectedComponentsList.each do |selectedComponent|
+          selectedComponents << components[selectedComponent.strip.chomp.to_i - 1]
+        end
+      else
+        selectedComponents << components[userComponentSelection.to_i - 1]
+      end
+      return selectedComponents
     end
     
     

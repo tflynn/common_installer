@@ -2,7 +2,7 @@
 
 require 'ostruct'
 
-SYSTEM_SETTINGS = {}
+SYSTEM_SETTINGS = OpenStruct.new
 
 SHELL_STARTUP_FILES = ['/etc/bashrc', '/etc/profile', '~/.bashrc' , '~/.bash_profile']
 
@@ -26,7 +26,7 @@ COMPONENT_OPTIONS.dnsServer = OpenStruct.new
 COMPONENT_OPTIONS.dnsServer.name = "DHS Server (MaraDNS)"
 COMPONENT_OPTIONS.dnsServer.buildInstallationDirectory = '/opt2'
 COMPONENT_OPTIONS.dnsServer.distributionGroup = 'maradns'
-COMPONENT_OPTIONS.dnsServer.distributionFile = nil
+COMPONENT_OPTIONS.dnsServer.distributionFile = 'maradns-2.0.01.tar.bz2'
 COMPONENT_OPTIONS.dnsServer.componentDependencies = nil
 COMPONENT_OPTIONS.dnsServer.compomentBuildType = nil
 
