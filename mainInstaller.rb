@@ -33,6 +33,26 @@ def remoteRequire(moduleName)
   unless localCopy
     logger.info(%{Obtaining #{fullModuleName} from #{fullModuleNameURI}})
   end
+  
+  customSettingsFile = "#{moduleName}Settings"
+  #puts "remoteRequire customSettingsFile #{customSettingsFile}"
+  if File.exists?(customSettingsFile)
+    #puts "remoteRequire customSettingsFile #{customSettingsFile} exists"
+    customSettingsFileAlreadyLoaded = false
+    $".each do | loadedFile |
+      if loadedFile == customSettingsFile
+        #puts "remoteRequire customSettingsFile #{customSettingsFile} already loaded"
+        customSettingsFileAlreadyLoaded = true
+        break
+      end
+    end
+    unless customSettingsFileAlreadyLoaded
+      fileContents = IOHelpers.readFile(customSettingsFile)
+      $" << customSettingsFile
+      eval(fileContents.join("\n"))
+    end
+  end
+  
 end
 
 remoteRequire 'installerLogger'
