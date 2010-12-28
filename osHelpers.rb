@@ -39,10 +39,6 @@ class OSHelpers
       Kernel.system(cmd)
       status = $?
       retVal = status == 0 ? SUCCESS : FAILURE
-      # if retVal == FAILURE
-      #   logger.error("Command \"#{cmd}\" returned status #{status} . Exiting ...")
-      #   Core.errorExit
-      # end
       return retVal
     end
     

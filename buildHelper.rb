@@ -31,7 +31,7 @@ class BuildHelper
       systemType = OSHelpers.getSystemType
       if systemType == SYSTEM_TYPE_LINUX
         if File.exists?(ldConfigFile)
-          fileContents = IOHelpers.readFile(lcConfigFile).join("\n")
+          fileContents = IOHelpers.readFile(ldConfigFile).join("\n")
           unless fileContents.index(newPath)
             logger.info("Adding #{newPath} to ldconfig")
             File.open(ldConfigFile,'a') do |file|

@@ -130,7 +130,7 @@ class GnuBuild
   
   def make
     executeWithErrorCheck do
-      results = BuildHelper.make(@baseFileName,settings,options)
+      results = BuildHelper.make(@baseFileName,@settings,getOptions)
       @status = results[:retVal]
       { :status => @status, :errorMsg => results[:errorMsg] }
     end
@@ -147,7 +147,7 @@ class GnuBuild
   
   def install
     executeWithErrorCheck do
-      results = BuildHelper.install(@baseFileName,settings,options)
+      results = BuildHelper.install(@baseFileName,@settings,getOptions)
       @status = results[:retVal]
       { :status => @status, :errorMsg => results[:errorMsg] }
     end
