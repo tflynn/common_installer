@@ -1,6 +1,8 @@
 #!/usr/bin/env jruby
 
-class ApacheWebServer
+remoteRequire 'components/gnuBuild'
+
+class ApacheWebServer < GnuBuild
   
   def preInstall
     puts("apacheWebServer.preInstall")

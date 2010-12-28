@@ -31,13 +31,18 @@ class OSHelpers
     end
     
     def executeCommand(cmd)
+      # caller[0,15].each do |callEntry|
+      #   puts "OSHelpers.executeCommand #{callEntry}"
+      # end
+      
+      logger.info("Executing command \"#{cmd}\"")
       Kernel.system(cmd)
       status = $?
       retVal = status == 0 ? SUCCESS : FAILURE
-      if retVal == FAILURE
-        logger.error("Command #{cmd} returned status #{status} . Exiting ...")
-        Core.errorExit
-      end
+      # if retVal == FAILURE
+      #   logger.error("Command \"#{cmd}\" returned status #{status} . Exiting ...")
+      #   Core.errorExit
+      # end
       return retVal
     end
     

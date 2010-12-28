@@ -19,7 +19,9 @@ class InstallerLogger
     @currentAppenders = []
     @currentFileName = nil
     addConsoleAppender
-    addFileAppender(getFileName)
+    # Ensure log file path is fully qualified
+    fullFileName = File.join(Dir.getwd,getFileName)
+    addFileAppender(fullFileName)
   end
 
   def setFileName(fileName)

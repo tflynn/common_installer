@@ -151,31 +151,10 @@ class Core
 
       currentComponent = requireComponent(componentName)
 
-      if currentComponent and currentComponent.respond_to?(:preInstall)
-        currentComponent.preInstall
+      if currentComponent 
+        currentComponent.completeObtainBuildInstallConfigure
       end
-      buildType = componentOptions.compomentBuildType
-      if buildType and buildType == BUILD_TYPE_GNU
-        overrideComponent = requireComponent('gnuBuild')
-        if overrideComponent and overrideComponent.respond_to?(:install)
-          overrideComponent.install
-        end
-      else
-        if currentComponent.respond_to?(:install)
-          currentComponent.install
-        end
-      end
-      if currentComponent.respond_to?(:postInstall)
-        currentComponent.postInstall
-      end
-      
-      if currentComponent.respond_to?(:configure)
-        currentComponent.configure
-      end
-      
-      #TODO make more general and callable from anywhere - probably postinstall
-      #updateExternalSettings
-      
+    
     end
     
     def normalExit

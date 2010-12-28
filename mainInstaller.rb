@@ -1,7 +1,7 @@
 #!/usr/bin/env jruby
 
 ENABLE_REMOTE_REQUIRE = true
-REMOTE_REPOSITORIES = ['http://dl.dropbox.com/u/12189743/InstallationFiles/common_installer']
+REMOTE_REPOSITORIES = ['http://dl.dropbox.com/u/12189743/InstallationFiles']
 DEFAULT_LOG_FILE_NAME = 'bootstrap_installer.log'
 
 #Load the module from a remote location
@@ -10,7 +10,7 @@ def remoteRequire(moduleName)
   fullModuleName = %{#{moduleName}.rb}
   localCopy = File.exists?(fullModuleName)
   remoteRepository = REMOTE_REPOSITORIES.first
-  fullModuleNameURI = "#{remoteRepository}/#{fullModuleName}"
+  fullModuleNameURI = "#{remoteRepository}/common_installer/#{fullModuleName}"
   if ENABLE_REMOTE_REQUIRE and (not localCopy)
     cmd = %{wget #{fullModuleNameURI}}
     fullCmd = %{#{cmd} > /dev/null 2>&1}
@@ -29,8 +29,10 @@ def remoteRequire(moduleName)
       Kernel.exit(1)
     end
   end
-  require(moduleName)
-  logger.info(%{Obtaining #{fullModuleName} from #{fullModuleNameURI}}) unless localCopy
+  unless localCopy
+    require(moduleName)
+    logger.info(%{Obtaining #{fullModuleName} from #{fullModuleNameURI}})
+  end
 end
 
 remoteRequire 'installerLogger'

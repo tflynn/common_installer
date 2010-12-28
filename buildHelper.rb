@@ -1,13 +1,11 @@
 #!/usr/bin/env jruby
 
+require 'fileutils'
+
 remoteRequire 'osHelpers'
 remoteRequire 'installerLogger'
 remoteRequire 'core'
-
-#TODO use dependencies to generate appropriate path.
-# Send in to command to pass as 'export PATH=....'
-
-
+remoteRequire 'ioHelpers'
 
 class BuildHelper
   
@@ -27,25 +25,78 @@ class BuildHelper
       return dependencyPaths
     end
     
-    def getDistributionFile(distributionGroup,distributionFile,settings,options = {})
+    def updateLdconfig(newPath)
+      ldConfigFile = '/etc/ld.so.conf'
+      ldConfigBin = 'ldconfig'
+      systemType = OSHelpers.getSystemType
+      if systemType == SYSTEM_TYPE_LINUX
+        if File.exists?(ldConfigFile)
+          fileContents = IOHelpers.readFile(lcConfigFile).join("\n")
+          unless fileContents.index(newPath)
+            logger.info("Adding #{newPath} to ldconfig")
+            File.open(ldConfigFile,'a') do |file|
+              file.puts(newPath)
+            end
+            OSHelpers.executeCommand(ldConfigBin)
+          end
+        end
+      end
+    end
+    
+    def executeCommandWithBuildEnvironment(cmd, settings,options = {})
+      fullCmd = nil
+      additionalPaths = %{#{settings.buildInstallationDirectory}/bin}
+      updateLdconfig(settings.buildInstallationDirectory)
+      if options[:dependencyPaths]
+        options[:dependencyPaths].each do |dependencyPath|
+          updateLdconfig(dependencyPath)
+          additionalPaths = %{#{dependencyPath}/bin:#{additionalPaths}}
+        end
+      end
+      if additionalPaths
+        fullCmd = %{export PATH=#{additionalPaths}:$\{PATH\} ;}
+      end
+      if fullCmd
+        fullCmd = %{#{fullCmd} #{cmd}}
+      else
+        fullCmd = %{#{cmd}}
+      end
+      #logger.info("Executing command \"#{fullCmd}\"")
+      retVal = OSHelpers.executeCommand(fullCmd)
+      return retVal
+    end
+    
+    def getDistributionFile(settings,options = {})
+      distributionGroup = settings.distributionGroup
+      distributionFile = settings.distributionFile
       remoteRepo = REMOTE_REPOSITORIES.first
       retVal = nil
       srcDir = %{#{settings.buildInstallationDirectory}/src}
       cmd = "mkdir -p #{srcDir}"
       retVal = OSHelpers.executeCommand(cmd)
+      distributionFileURI = "#{remoteRepo}/#{distributionGroup}/#{distributionFile}"
+      errorMsg = nil
       if retVal == SUCCESS
         Dir.chdir(srcDir) do |dir|
-          cmd = %{wget #{remoteRepo}/#{distributionGroup}/#{distributionFile}}
+          if File.exists?(distributionFile)
+            File.delete(distributionFile)
+          end
+          cmd = %{wget #{distributionFileURI}}
+          retVal = OSHelpers.executeCommand(cmd)
         end
-        retVal = OSHelpers.executeCommand(cmd)
       end
-      return retVal
+      if retVal == FAILURE
+        errorMsg = "Component #{settings.name} : Unable to retrieve distribution file #{distributionFileURI}"
+      end  
+      return {:retVal => retVal, :errorMsg => errorMsg }
     end
     
-    def unpackFile(fileName,settings,options = {})
+    def unpackFile(settings,options = {})
+      fileName = settings.distributionFile
       cmd = nil
-      retVal = nil
+      retVal = FAILURE
       baseFileName = nil
+      errorMsg = nil
       srcDir = %{#{settings.buildInstallationDirectory}/src}
 
       if fileName =~ /\.tar\.gz$/
@@ -63,29 +114,46 @@ class BuildHelper
       end
       if cmd
         Dir.chdir(srcDir) do |dir|
+          if File.exists?(baseFileName)
+            FileUtils.rm_rf(baseFileName)
+          end
           retVal = OSHelpers.executeCommand(cmd)
         end
-      else
-        retVal = FAILURE
       end
-      return {:retVal => retVal, :baseFileName => baseFileName }
+      if retVal == FAILURE
+        errorMsg = "Component #{settings.name} : Unable to unpack #{fileName}"
+      end
+      return {:retVal => retVal, :baseFileName => baseFileName , :errorMsg => errorMsg}
     end
     
-    def configure(baseFileName,settings,options = {})
+    def configureBuild(settings,options = {})
+      # puts "Entering BuildHelper.configureBuild"
+      # caller[0,10].each do |callEntry|
+      #   puts "BuildHelper.configureBuild #{callEntry}"
+      # end
+      # 
+      baseFileName = options[:baseFileName]
       retVal = nil
       srcDir = %{#{settings.buildInstallationDirectory}/src}
       Dir.chdir(srcDir) do |xdir|
         Dir.chdir(baseFileName) do |dir|
           buildInstallationDirectory = settings.buildInstallationDirectory
-          if buildInstallationDirectory
-            cmd = %{./configure --prefix=#{buildInstallationDirectory}}
+          if options[:customConfigureBuildCommand]
+            cmd = options[:customConfigureBuildCommand]
           else
-            cmd = %{./configure}
+            if buildInstallationDirectory
+              cmd = %{./configure --prefix=#{buildInstallationDirectory}}
+            else
+              cmd = %{./configure}
+            end
           end
-          retVal = OSHelpers.executeCommand(cmd)
+          retVal = executeCommandWithBuildEnvironment(cmd, settings,options)
         end
       end
-      return retVal
+      if retVal == FAILURE
+        errorMsg = "Component #{settings.name} : Unable to configure build"
+      end
+      return {:retVal => retVal, :errorMsg => errorMsg}
     end
     
     def make(baseFileName,settings,options = {})
@@ -94,10 +162,13 @@ class BuildHelper
       Dir.chdir(srcDir) do |xdir|
         Dir.chdir(baseFileName) do |dir|
           cmd = %{make}
-          retVal = OSHelpers.executeCommand(cmd)
+          retVal = executeCommandWithBuildEnvironment(cmd, settings,options)
         end
       end
-      return retVal
+      if retVal == FAILURE
+        errorMsg = "Component #{settings.name} : Unable to 'make' build"
+      end
+      return {:retVal => retVal, :errorMsg => errorMsg}
     end
     
     def install(baseFileName,settings,options = {})
@@ -106,22 +177,15 @@ class BuildHelper
       Dir.chdir(srcDir) do |xdir|
         Dir.chdir(baseFileName) do |dir|
           cmd = %{make install}
-          retVal = OSHelpers.executeCommand(cmd)
+          retVal = executeCommandWithBuildEnvironment(cmd, settings,options)
         end
       end
-      return retVal
+      if retVal == FAILURE
+        errorMsg = "Component #{settings.name} : Unable to install build"
+      end
+      return {:retVal => retVal, :errorMsg => errorMsg}
     end
 
-    def standardBuildAndInstall(settings,options = {})
-      getDistributionFile(settings.distributionGroup,settings.distributionFile,settings,options)
-      results = unpackFile(settings.distributionFile,settings,options)
-      baseFileName = results[:baseFileName]
-      configure(baseFileName,settings,options)
-      make(baseFileName,settings,options)
-      install(baseFileName,settings,options)
-      return SUCCESS
-    end
-    
   end
   
 end

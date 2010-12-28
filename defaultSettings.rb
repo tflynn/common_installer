@@ -26,7 +26,7 @@ COMPONENT_OPTIONS.baseSystem.componentDependencies = nil
 COMPONENT_OPTIONS.baseSystem.compomentBuildType = nil
 
 COMPONENT_OPTIONS.dnsServer = OpenStruct.new
-COMPONENT_OPTIONS.dnsServer.name = "DHS Server (MaraDNS)"
+COMPONENT_OPTIONS.dnsServer.name = "DNS Server (MaraDNS)"
 COMPONENT_OPTIONS.dnsServer.buildInstallationDirectory = '/opt2'
 COMPONENT_OPTIONS.dnsServer.distributionGroup = 'maradns'
 COMPONENT_OPTIONS.dnsServer.distributionFile = 'maradns-2.0.01.tar.bz2'
