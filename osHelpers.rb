@@ -42,6 +42,12 @@ class OSHelpers
       return retVal
     end
     
+    def isCommmandPresent?(cmd)
+      Kernel.system("which #{cmd}")
+      status = $?
+      return status == 0
+    end
+    
   end
   
 end

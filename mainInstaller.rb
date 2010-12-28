@@ -20,7 +20,7 @@ def remoteRequire(moduleName)
       success = Kernel.system(fullCmd)
     end
     unless success
-      msg = %{Error: File #{fullModuleName} not found at fullModuleNameURI. Exiting ... }
+      msg = %{Error: File #{fullModuleName} not found at #{fullModuleNameURI}. Exiting ... }
       if Object.respond_to?(:logger)
         logger.error(msg)
       else
@@ -29,8 +29,8 @@ def remoteRequire(moduleName)
       Kernel.exit(1)
     end
   end
+  require(moduleName)
   unless localCopy
-    require(moduleName)
     logger.info(%{Obtaining #{fullModuleName} from #{fullModuleNameURI}})
   end
 end
@@ -42,6 +42,7 @@ remoteRequire 'osHelpers'
 remoteRequire 'ioHelpers'
 remoteRequire 'core'
 remoteRequire 'buildHelper'
+remoteRequire 'networkHelper'
 
 #puts "ARGV #{ARGV.inspect}"
 Core.runInstaller

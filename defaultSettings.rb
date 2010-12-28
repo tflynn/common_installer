@@ -27,11 +27,13 @@ COMPONENT_OPTIONS.baseSystem.compomentBuildType = nil
 
 COMPONENT_OPTIONS.dnsServer = OpenStruct.new
 COMPONENT_OPTIONS.dnsServer.name = "DNS Server (MaraDNS)"
+COMPONENT_OPTIONS.dnsServer.osSpecific = 'Linux'
 COMPONENT_OPTIONS.dnsServer.buildInstallationDirectory = '/opt2'
 COMPONENT_OPTIONS.dnsServer.distributionGroup = 'maradns'
 COMPONENT_OPTIONS.dnsServer.distributionFile = 'maradns-2.0.01.tar.bz2'
 COMPONENT_OPTIONS.dnsServer.componentDependencies = nil
 COMPONENT_OPTIONS.dnsServer.compomentBuildType = nil
+
 
 COMPONENT_OPTIONS.apacheWebServer = OpenStruct.new
 COMPONENT_OPTIONS.apacheWebServer.name = "Apache Web Server"
@@ -42,7 +44,7 @@ COMPONENT_OPTIONS.apacheWebServer.componentDependencies = nil
 COMPONENT_OPTIONS.apacheWebServer.compomentBuildType = BUILD_TYPE_GNU
 
 COMPONENT_OPTIONS.php5 = OpenStruct.new
-COMPONENT_OPTIONS.php5.name = "PHP5"
+COMPONENT_OPTIONS.php5.name = "PHP 5"
 COMPONENT_OPTIONS.php5.buildInstallationDirectory = nil
 COMPONENT_OPTIONS.php5.distributionGroup = nil
 COMPONENT_OPTIONS.php5.distributionFile = nil
@@ -50,7 +52,7 @@ COMPONENT_OPTIONS.php5.componentDependencies = nil
 COMPONENT_OPTIONS.php5.compomentBuildType = nil
 
 COMPONENT_OPTIONS.mysql5 = OpenStruct.new
-COMPONENT_OPTIONS.mysql5.name = "PHP 5 "
+COMPONENT_OPTIONS.mysql5.name = "MYSQL 5"
 COMPONENT_OPTIONS.mysql5.buildInstallationDirectory = nil
 COMPONENT_OPTIONS.mysql5.distributionGroup = nil
 COMPONENT_OPTIONS.mysql5.distributionFile = nil

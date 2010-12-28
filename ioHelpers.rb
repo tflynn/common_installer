@@ -4,13 +4,17 @@ class IOHelpers
   
   class << self
     
-    def readFile(fileName)
+    def readFile(fileName,options = {})
+      options = {:skip_comments => true, :skip_empty => true}.merge(options)
       rawLines = nil
       File.open(fileName) do |file|
         rawLines = file.readlines
       end
       lines = []
       rawLines.each do |rawLine|
+        next if (rawLine =~ /^#/ and options[:skip_comments])
+        rawLine = rawLine.chomp.strip
+        next if (rawLine == '' and options[:skip_empty])
         lines << rawLine.chomp.strip
       end
       return lines
@@ -36,6 +40,7 @@ class IOHelpers
         end
       end
     end
+    
     
   end
 

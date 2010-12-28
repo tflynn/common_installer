@@ -37,7 +37,7 @@ class Core
       remoteRequire(DEFAULT_SETTINGS_FILE)
       if File.exists?(CUSTOM_SETTINGS_FILE)
         fileContents = IOHelpers.readFile(CUSTOM_SETTINGS_FILE)
-        eval(fileContents.join("\n"))
+        eval("::" + fileContents.join("\n::"))
       end
     end
     
@@ -84,7 +84,7 @@ class Core
 
     def displayInstallationMenu()
       puts("\nAvailable Installation Components\n\n")
-      menuEntryFormat = '%d. %s'
+      menuEntryFormat = '%d. %s %s'
       components = []
       entryPosition = 0
       MENU_ORDER.each do |menuEntry|
@@ -92,7 +92,7 @@ class Core
           puts(menuEntry)
         else
           componentOptions = getComponentOptions(menuEntry)
-          menuOption = menuEntryFormat % [entryPosition + 1 , componentOptions.name]
+          menuOption = menuEntryFormat % [entryPosition + 1 , componentOptions.name, componentOptions.osSpecific.nil? ? '' : "(#{componentOptions.osSpecific} only)"]
           puts(menuOption)
           entryPosition += 1 
           components << menuEntry
