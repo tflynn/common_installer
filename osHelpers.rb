@@ -43,14 +43,15 @@ class OSHelpers
       # end
       allPaths = additionalPaths.join(":")
       tempFile = Tempfile.new("cmdOut")
-      fullCmd = %{export PATH=#{allPaths} ;  #{cmd} | tee #{tempFile.path}}
-      logger.info("Executing command \"#{fullCmd}\"")
+      almostFullCmd = %{export PATH=#{allPaths} ;  #{cmd} }
+      fullCmd = %{#{almostFullCmd} | tee #{tempFile.path}}
+      logger.info("Executing command \"#{almostFullCmd}\"")
       Kernel.system(fullCmd)
       status = $?
       retVal = status == 0 ? SUCCESS : FAILURE
       cmdOutput = IOHelpers.readFile(tempFile.path)
       File.delete(tempFile.path)
-      return {:status => status , :fullCommand => fullCmd, :commandOutput => cmdOutput , :retVal => retVal }
+      return {:status => status , :fullCommand => almostFullCmd, :commandOutput => cmdOutput , :retVal => retVal }
     end
     
     def isCommmandPresent?(cmd)

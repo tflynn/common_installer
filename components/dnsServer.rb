@@ -153,5 +153,9 @@ DOMAIN_ZONE
       {:status => status , :errorMsg => errorMsg}  
     end
   end
+  
+  def afterEverything
+    logger.info("Component #{@settings.name} successfully installed, configured and run")
+  end
     
 end

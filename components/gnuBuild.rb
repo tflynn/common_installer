@@ -182,6 +182,9 @@ class GnuBuild
   def afterRun
   end
   
+  def afterEverything
+  end
+  
   def completeObtainBuildInstallConfigure
     beforeGetDistribution
     getDistribution
@@ -204,6 +207,7 @@ class GnuBuild
     beforeRun
     run
     afterRun
+    afterEverything
   end
   
 end
