@@ -56,11 +56,17 @@ class GnuBuild
     return needToInstall
   end
   
-  def executeWithErrorCheck
-    
+  def executeWithErrorCheck(options = {})
+    options = {:installCheck => true }.merge(options)
+    installCheck = options[:installCheck]
     if block_given?
       #puts "gnuBuild.executeWithErrorCheck for #{callingComponentName} block provided"
-      if installNeeded?
+      if installCheck
+        goExecute = installNeeded?
+      else
+        goExecute = true
+      end
+      if goExecute 
         results = yield
         status = results[:status]
         errorMsg = results[:errorMsg]

@@ -34,7 +34,7 @@ def remoteRequire(moduleName)
     logger.info(%{Obtaining #{fullModuleName} from #{fullModuleNameURI}})
   end
   
-  customSettingsFile = "#{moduleName}Settings"
+  customSettingsFile = File.basename("#{moduleName}Settings")
   #puts "remoteRequire customSettingsFile #{customSettingsFile}"
   if File.exists?(customSettingsFile)
     #puts "remoteRequire customSettingsFile #{customSettingsFile} exists"
