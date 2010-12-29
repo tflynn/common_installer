@@ -45,25 +45,24 @@ class BuildHelper
     
     def executeCommandWithBuildEnvironment(cmd, settings,options = {})
       fullCmd = nil
-      additionalPaths = %{#{settings.buildInstallationDirectory}/bin}
+      additionalPaths = [%{#{settings.buildInstallationDirectory}/bin}]
       updateLdconfig(settings.buildInstallationDirectory)
       if options[:dependencyPaths]
         options[:dependencyPaths].each do |dependencyPath|
           updateLdconfig(dependencyPath)
-          additionalPaths = %{#{dependencyPath}/bin:#{additionalPaths}}
+          additionalPaths << "#{dependencyPath}/bin"
         end
       end
-      if additionalPaths
-        fullCmd = %{export PATH=#{additionalPaths}:$\{PATH\} ;}
-      end
-      if fullCmd
-        fullCmd = %{#{fullCmd} #{cmd}}
-      else
-        fullCmd = %{#{cmd}}
-      end
-      #logger.info("Executing command \"#{fullCmd}\"")
-      retVal = OSHelpers.executeCommand(fullCmd)
+      results = OSHelpers.executeCommand(cmd,{:additionalPaths => additionalPaths })
+      retVal = results[:retVal]
       return retVal
+    end
+    
+    def makeStandardBuildDirectories(settings, options = {})
+      ::DEFAULT_BUILD_DIRECTORIES.each do |buildDir|
+        fullDir = "#{settings.buildInstallationDirectory}/#{buildDir}"
+        FileUtils.mkdir_p(fullDir)
+      end
     end
     
     def getDistributionFile(settings,options = {})
@@ -73,7 +72,8 @@ class BuildHelper
       retVal = nil
       srcDir = %{#{settings.buildInstallationDirectory}/src}
       cmd = "mkdir -p #{srcDir}"
-      retVal = OSHelpers.executeCommand(cmd)
+      results = OSHelpers.executeCommand(cmd)
+      retVal = results[:retVal]
       distributionFileURI = "#{remoteRepo}/#{distributionGroup}/#{distributionFile}"
       errorMsg = nil
       if retVal == SUCCESS
@@ -82,7 +82,8 @@ class BuildHelper
             File.delete(distributionFile)
           end
           cmd = %{wget #{distributionFileURI}}
-          retVal = OSHelpers.executeCommand(cmd)
+          results = OSHelpers.executeCommand(cmd)
+          retVal = results[:retVal]
         end
       end
       if retVal == FAILURE
@@ -117,7 +118,8 @@ class BuildHelper
           if File.exists?(baseFileName)
             FileUtils.rm_rf(baseFileName)
           end
-          retVal = OSHelpers.executeCommand(cmd)
+          results = OSHelpers.executeCommand(cmd)
+          retVal = results[:retVal]
         end
       end
       if retVal == FAILURE
@@ -132,6 +134,7 @@ class BuildHelper
       #   puts "BuildHelper.configureBuild #{callEntry}"
       # end
       # 
+      makeStandardBuildDirectories(settings)
       baseFileName = options[:baseFileName]
       retVal = nil
       srcDir = %{#{settings.buildInstallationDirectory}/src}
@@ -161,7 +164,11 @@ class BuildHelper
       srcDir = %{#{settings.buildInstallationDirectory}/src}
       Dir.chdir(srcDir) do |xdir|
         Dir.chdir(baseFileName) do |dir|
-          cmd = %{make}
+          if options[:customMakeCommand]
+            cmd = options[:customMakeCommand]
+          else
+            cmd = %{make}
+          end
           retVal = executeCommandWithBuildEnvironment(cmd, settings,options)
         end
       end
@@ -176,7 +183,11 @@ class BuildHelper
       srcDir = %{#{settings.buildInstallationDirectory}/src}
       Dir.chdir(srcDir) do |xdir|
         Dir.chdir(baseFileName) do |dir|
-          cmd = %{make install}
+          if options[:customMakeInstallCommand]
+            cmd = options[:customMakeInstallCommand]
+          else
+            cmd = %{make install}
+          end
           retVal = executeCommandWithBuildEnvironment(cmd, settings,options)
         end
       end

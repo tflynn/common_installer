@@ -37,6 +37,7 @@ class Core
       remoteRequire(DEFAULT_SETTINGS_FILE)
       if File.exists?(CUSTOM_SETTINGS_FILE)
         fileContents = IOHelpers.readFile(CUSTOM_SETTINGS_FILE)
+        logger.info(%{Loading settings file #{CUSTOM_SETTINGS_FILE}})
         eval(fileContents.join("\n"))
       end
     end

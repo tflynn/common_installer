@@ -13,11 +13,12 @@ class NetworkHelper
       primaryIPAddress = nil
       if OSHelpers.isCommmandPresent?('ifconfig')
         osType = OSHelpers.getSystemType
-        result = `ifconfig`
+        results = OSHelpers.executeCommand('ifconfig')
+        cmdOutput = results[:commandOutput]
         if osType == SYSTEM_TYPE_OSX
-          primaryIPAddress = parseIfonfigOutput(result, 'en0')
+          primaryIPAddress = parseIfonfigOutput(cmdOutput, 'en0')
         elsif osType == SYSTEM_TYPE_LINUX
-          primaryIPAddress = parseIfonfigOutput(result, 'eth0')
+          primaryIPAddress = parseIfonfigOutput(cmdOutput, 'eth0')
         end
       else
         logger.error("Unable to locate command 'ifconfig'. Leaving ...")
@@ -31,7 +32,6 @@ class NetworkHelper
       networkAdapterRegex = Regexp.new('^' + networkAdapter)
       adapterEntryActive = false
       ipAddress = nil
-      ifconfigOutput = ifconfigOutput.split("\n")
       ifconfigOutput.each do |ifconfigLine|
         if ifconfigLine =~ networkAdapterRegex
           adapterEntryActive = true

@@ -1,11 +1,15 @@
 #!/usr/bin/env jruby
 
+require 'tempfile'
+
+remoteRequire 'core'
+remoteRequire 'installerLogger'
+
 SYSTEM_TYPE_LINUX = 'linux'
 SYSTEM_TYPE_OSX = 'osx'
 SYSTEM_TYPE_UNKNOWN = 'unknown'
 
-remoteRequire 'core'
-remoteRequire 'installerLogger'
+remoteRequire 'ioHelpers'
 
 class OSHelpers
 
@@ -30,22 +34,28 @@ class OSHelpers
       return systemType
     end
     
-    def executeCommand(cmd)
+    def executeCommand(cmd,options = {})
+      additionalPaths = []
+      additionalPaths = additionalPaths.concat(options[:additionalPaths]) if options[:additionalPaths]
+      additionalPaths = additionalPaths.concat(::DEFAULT_PATHS)
       # caller[0,15].each do |callEntry|
       #   puts "OSHelpers.executeCommand #{callEntry}"
       # end
-      
-      logger.info("Executing command \"#{cmd}\"")
-      Kernel.system(cmd)
+      allPaths = additionalPaths.join(":")
+      tempFile = Tempfile.new("cmdOut")
+      fullCmd = %{export PATH=#{allPaths} ;  #{cmd} | tee #{tempFile.path}}
+      logger.info("Executing command \"#{fullCmd}\"")
+      Kernel.system(fullCmd)
       status = $?
       retVal = status == 0 ? SUCCESS : FAILURE
-      return retVal
+      cmdOutput = IOHelpers.readFile(tempFile.path)
+      File.delete(tempFile.path)
+      return {:status => status , :fullCommand => fullCmd, :commandOutput => cmdOutput , :retVal => retVal }
     end
     
     def isCommmandPresent?(cmd)
-      Kernel.system("which #{cmd}")
-      status = $?
-      return status == 0
+      results = executeCommand("which #{cmd}")
+      return results[:status] == 0
     end
     
   end

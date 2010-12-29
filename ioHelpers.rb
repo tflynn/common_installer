@@ -19,6 +19,13 @@ class IOHelpers
       end
       return lines
     end
+
+    def overwriteFile(fileName, contents, options = {})
+      File.open(fileName,'w') do |file|
+        file.write(contents)
+      end
+    end
+    
     
     def readKeyboard
       return gets.chomp.strip
@@ -40,7 +47,6 @@ class IOHelpers
         end
       end
     end
-    
     
   end
 

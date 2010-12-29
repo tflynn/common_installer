@@ -47,6 +47,7 @@ def remoteRequire(moduleName)
       end
     end
     unless customSettingsFileAlreadyLoaded
+      logger.info(%{Loading settings file #{customSettingsFile}})
       fileContents = IOHelpers.readFile(customSettingsFile)
       $" << customSettingsFile
       eval(fileContents.join("\n"))
@@ -58,8 +59,8 @@ end
 remoteRequire 'installerLogger'
 
 remoteRequire 'commandLine'
-remoteRequire 'osHelpers'
 remoteRequire 'ioHelpers'
+remoteRequire 'osHelpers'
 remoteRequire 'core'
 remoteRequire 'buildHelper'
 remoteRequire 'networkHelper'
