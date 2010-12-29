@@ -3,3 +3,4 @@
 # DNS Settings
 #::DNS_PRIMARY_IP='1.2.3.4'
 ::DNS_PRIMARY_DOMAIN='myownstaging.com'
+:DNS_SERVER_AUTO_START=true

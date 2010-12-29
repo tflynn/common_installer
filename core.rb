@@ -141,21 +141,22 @@ class Core
     
     def installComponent(componentName)
       componentOptions = getComponentOptions(componentName) 
-      puts(%{Installing component #{componentOptions.name}})
+      currentComponent = requireComponent(componentName)
+      if currentComponent.canBeInstalled?
+        logger.info(%{Installing component #{componentOptions.name}})
 
-      componentDependencies = componentOptions.componentDependencies
-      if componentDependencies
-        componentDependencies.each do |componentDependency|
-          installComponent(componentDependency)
+        componentDependencies = componentOptions.componentDependencies
+        if componentDependencies
+          componentDependencies.each do |componentDependency|
+            installComponent(componentDependency)
+          end
+        end
+
+        if currentComponent 
+          currentComponent.completeObtainBuildInstallConfigure
         end
       end
-
-      currentComponent = requireComponent(componentName)
-
-      if currentComponent 
-        currentComponent.completeObtainBuildInstallConfigure
-      end
-    
+      
     end
     
     def normalExit

@@ -40,6 +40,10 @@ class GnuBuild
     return @options
   end
   
+  def canBeInstalled?
+    return true
+  end
+  
   def alreadyInstalled?
     logger.fatal("GnuBuild.alreadyInstalled? must be overridden. Leaving ...")
     Core.errorExit
@@ -169,6 +173,15 @@ class GnuBuild
     executeWithErrorCheck
   end
   
+  def beforeRun
+  end
+  
+  def run
+  end
+  
+  def afterRun
+  end
+  
   def completeObtainBuildInstallConfigure
     beforeGetDistribution
     getDistribution
@@ -188,6 +201,9 @@ class GnuBuild
     beforeConfigure
     configure
     afterConfigure
+    beforeRun
+    run
+    afterRun
   end
   
 end

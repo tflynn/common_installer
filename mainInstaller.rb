@@ -57,7 +57,6 @@ def remoteRequire(moduleName)
 end
 
 remoteRequire 'installerLogger'
-
 remoteRequire 'commandLine'
 remoteRequire 'ioHelpers'
 remoteRequire 'osHelpers'
