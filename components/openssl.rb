@@ -17,7 +17,7 @@ class Openssl < GnuBuild
     includeFile = "#{buildInstallationDirectory}/include/openssl/opensslconf.h"
     staticLibFile = "#{buildInstallationDirectory}/lib/libssl.a"
     componentInstalled = File.exists?(includeFile) and File.exists?(staticLibFile)
-    logger.info("Component: #{@settings.name} : Checking for presence of files '#{includeFile}' and  '#{staticLibFile}' . File  #{includeFile} #{File.exists?(includeFile) ? 'is' : 'is not'} present and file #{staticLibFile}  #{File.exists?(staticLibFile) ? 'is' : 'is not'} present so component #{componentInstalled ? 'is' : 'is not'} already installed.")
+    logger.debug("Component: #{@settings.name} : Checking for presence of files '#{includeFile}' and  '#{staticLibFile}' . File  #{includeFile} #{File.exists?(includeFile) ? 'is' : 'is not'} present and file #{staticLibFile}  #{File.exists?(staticLibFile) ? 'is' : 'is not'} present so component #{componentInstalled ? 'is' : 'is not'} already installed.")
     return componentInstalled
   end
 

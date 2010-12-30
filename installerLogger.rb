@@ -1,5 +1,10 @@
 #!/usr/bin/env jruby
 
+# This class is called 'installationLogger' to avoid naming conflict with 'logger' provided in the standard library
+# It is written to have no dependencies - so it may be loaded independently of any others
+::DEFAULT_LOGFILE_NAME = 'bootstrap_installer.log' unless defined?(::DEFAULT_LOGFILE_NAME)
+::CUSTOM_SETTINGS_FILE = 'customSettings' unless defined?(::CUSTOM_SETTINGS_FILE)
+
 class InstallerLogger
   
   LEVEL_TRACE=0
@@ -11,47 +16,78 @@ class InstallerLogger
 
   LEVELS_TEXT = ['TRACE', 'DEBUG' , 'INFO', 'WARN', 'ERROR', 'FATAL']
 
-  TYPE_CONSOLE_APPENDER = 'typeConsoleAppender'
-  TYPE_FILE_APPENDER = 'typeFileAppender'
-
+  attr_reader :consoleLogging, :fileLogging
+  
   def initialize
-    @currentLogLevel = LEVEL_DEBUG
-    @currentAppenders = []
-    @currentFileName = nil
-    addConsoleAppender
-    # Ensure log file path is fully qualified
-    fullFileName = File.join(Dir.getwd,getFileName)
-    addFileAppender(fullFileName)
+    begin
+      @currentLogLevel = LEVEL_DEBUG
+      @currentFileName = File.expand_path(::DEFAULT_LOGFILE_NAME)
+      @consoleLogging = true
+      @fileLogging = true
+      
+      processCustomSettings
+      processCommandLineOptions
+
+    rescue Exception => ex
+      puts %{Error: installerLogger failed to initialize correctly. Leaving ... \n#{ex.to_s} \n #{ex.backtrace.join("\n")}}
+      Kernel.exit(1)
+    end
   end
 
+  # Load custom settings locally just for logging initialization
+  def processCustomSettings
+    if File.exists?(::CUSTOM_SETTINGS_FILE)
+      customSettings = IO.read(::CUSTOM_SETTINGS_FILE)
+      customSettings = customSettings.split("\n")
+      customSettings.each do |customSetting|
+        if customSetting =~ /^\:\:LOGGING_OPTIONS\./
+          setting, value = customSetting.split('=')
+          setting = setting.chomp.strip.sub('::LOGGING_OPTIONS.','')
+          value = value.chomp.strip
+          if setting == 'logLevel'
+            level = LEVELS_TEXT.index(value.upcase)
+            @currentLogLevel = level if level
+          elsif setting == 'consoleLogging'
+            @consoleLogging = value.downcase == 'true'
+          elsif setting == 'fileLogging'
+            @fileLogging = value.downcase == 'true'
+          elsif setting == 'logfile'
+            @currentFileName = File.expand_path(value)
+          end
+        end
+      end
+    end
+  end
+
+  # Parse command line options just for logging initialization
+  def processCommandLineOptions
+    if ARGV
+      ARGV.each do |arg|
+        if arg.index('=')
+          setting, value = arg.split('=')
+          setting = setting.chomp
+          value = value.chomp.strip
+          if setting == 'logLevel'
+            level = LEVELS_TEXT.index(value.upcase)
+            @currentLogLevel = level if level
+          elsif setting == 'consoleLogging'
+            @consoleLogging = value.downcase == 'true'
+          elsif setting == 'fileLogging'
+            @fileLogging = value.downcase == 'true'
+          elsif setting == 'logfile'
+            @currentFileName = File.expand_path(value)
+          end
+        end
+      end
+    end
+  end
+  
   def setFileName(fileName)
     @currentFileName = fileName
   end
 
   def getFileName
-    unless @currentFileName
-      @currentFileName = DEFAULT_LOG_FILE_NAME
-      #duplicate CommandLine.getLogFileName to avoid dependency here
-      if ARGV
-        ARGV.each do |arg|
-          if arg =~ /^logfile/
-            option, value = arg.split('=')
-            @currentFileName = value
-            break
-          end
-        end
-      end
-    end
     return @currentFileName
-  end
-
-  def addConsoleAppender
-    @currentAppenders << TYPE_CONSOLE_APPENDER
-  end
-
-  def addFileAppender(fileName) 
-    setFileName(fileName)
-    @currentAppenders << TYPE_FILE_APPENDER
   end
 
   def setTrace
@@ -80,28 +116,25 @@ class InstallerLogger
 
 
   def msg(levelText, msg)
-    timeStamp = `date "+%Y-%m-%d %H:%M:%S"`.chomp.strip
+    timeStamp = Time.now.strftime("%Y-%m-%d %H:%M:%S")
     fullMsg = %{#{timeStamp} #{levelText}: #{msg}}
-    if @currentAppenders.size == 0
-      addConsoleAppender
+    if @consoleLogging
+      puts(fullMsg)
     end
-    @currentAppenders.each do |currentAppender|
-      if currentAppender == TYPE_CONSOLE_APPENDER
-        puts(fullMsg)
-      end
-      if currentAppender == TYPE_FILE_APPENDER
-        File.open(getFileName,'a') do |logfile|
-          logfile.puts(fullMsg)
-        end
+    if @fileLogging
+      File.open(getFileName,'a') do |logfile|
+        logfile.puts(fullMsg)
       end
     end
+    return true
   end
 
   def logMsgAboveLogLevel(logLevel,msg)
     if @currentLogLevel <= logLevel
       levelText = LEVELS_TEXT[logLevel]
-      msg(levelText, msg)
+      return msg(levelText, msg)
     end
+    return false
   end
 
   def trace(msg) 
@@ -131,14 +164,16 @@ class InstallerLogger
 
 end
 
+unless defined?(@@logger)
+  @@logger = InstallerLogger.new
+end
+
 # Make a common logger instance global available as 'logger'
 class Object
   
   def logger
-    unless defined?(@@logger)
-      @@logger = InstallerLogger.new
-    end
     return @@logger
   end
   
 end
+

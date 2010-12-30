@@ -42,11 +42,21 @@ class OSHelpers
       #   puts "OSHelpers.executeCommand #{callEntry}"
       # end
       allPaths = additionalPaths.join(":")
-      tempFile = Tempfile.new("cmdOut")
       almostFullCmd = %{export PATH=#{allPaths} ;  #{cmd} }
-      fullCmd = %{#{almostFullCmd} | tee #{tempFile.path}}
       logger.debug("Executing command \"#{almostFullCmd}\"")
+      tempFile = Tempfile.new("cmdOut")
+      if logger.consoleLogging
+        fullCmd = %{#{almostFullCmd} | tee #{tempFile.path}}
+      else
+        fullCmd = %{#{almostFullCmd} >#{tempFile.path} 2>&1}
+      end
       status = Kernel.system(fullCmd)
+      if logger.fileLogging
+        cmdOutput = IO.read(tempFile.path)
+        File.open(logger.getFileName,'a') do |logfile|
+          logfile.write(cmdOutput)
+        end
+      end
       # If Kernel.system returns a false results, docs say error code is in $?
       if status == true
         status = 0

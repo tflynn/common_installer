@@ -2,7 +2,10 @@
 
 ENABLE_REMOTE_REQUIRE = true
 REMOTE_REPOSITORIES = ['http://dl.dropbox.com/u/12189743/InstallationFiles']
-DEFAULT_LOG_FILE_NAME = 'bootstrap_installer.log'
+DEFAULT_LOGFILE_NAME = 'bootstrap_installer.log'
+DEFAULT_SETTINGS_FILE = 'defaultSettings'
+CUSTOM_SETTINGS_FILE = 'customSettings'
+
 
 #Load the module from a remote location
 #This will fail in remote mode if the remote file is not present
@@ -31,7 +34,7 @@ def remoteRequire(moduleName)
   end
   status = require(moduleName)
   unless localCopy
-    logger.info(%{Obtaining #{fullModuleName} from #{fullModuleNameURI}})
+    logger.debug(%{Obtaining #{fullModuleName} from #{fullModuleNameURI}})
   end
   
   return status

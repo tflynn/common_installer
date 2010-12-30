@@ -18,6 +18,12 @@ require 'ostruct'
 
 ::SYSTEM_SETTINGS = OpenStruct.new
 
+::LOGGING_OPTIONS = OpenStruct.new
+::LOGGING_OPTIONS.logLevel='DEBUG'
+::LOGGING_OPTIONS.consoleLogging=true
+::LOGGING_OPTIONS.fileLogging=true
+::LOGGING_OPTIONS.logfile=::DEFAULT_LOGFILE_NAME
+
 ::COMPONENT_OPTIONS = OpenStruct.new
 
 ::COMPONENT_OPTIONS.baseSystem = OpenStruct.new

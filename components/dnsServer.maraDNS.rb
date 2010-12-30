@@ -30,7 +30,7 @@ class DnsServer < GnuBuild
   end
   
   def alreadyInstalled?
-    logger.info("Component: #{@settings.name} : Checking for presence of file '/etc/mararc' . File #{File.exists?('/etc/mararc') ? 'is' : 'is not'} present so component #{File.exists?('/etc/mararc') ? 'is' : 'is not'} already installed.")
+    logger.debug("Component: #{@settings.name} : Checking for presence of file '/etc/mararc' . File #{File.exists?('/etc/mararc') ? 'is' : 'is not'} present so component #{File.exists?('/etc/mararc') ? 'is' : 'is not'} already installed.")
     return File.exists?('/etc/mararc')
   end
   
