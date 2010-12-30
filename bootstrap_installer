@@ -758,7 +758,12 @@ function getAndRunJRubyInstaller() {
   chmod a+x ./mainInstaller.rb
   infoMsg "About to run mainInstaller"
   #TODO pass necessary settings
-  exec jruby -s ./mainInstaller.rb logfile=${BOOTSTRAP_INSTALLER_LOG_FILENAME}
+  
+  echo "#!/usr/bin/env bash" > ./runInstaller
+  echo "export PATH="${PATH} >> ./runInstaller
+  echo "jruby -s ./mainInstaller.rb logfile=${BOOTSTRAP_INSTALLER_LOG_FILENAME}" >> ./runInstaller
+  chmod 0755 ./runInstaller
+  exec ./runInstaller
 }
 
 #
