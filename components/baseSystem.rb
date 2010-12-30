@@ -2,20 +2,16 @@
 
 class BaseSystem
   
-  def preInstall
-    puts("baseSystem.preInstall")
-  end
-
-  def install
-    puts("baseSystem.install")
-  end
-
-  def postInstall()
-    puts("baseSystem.postInstall")
+  def initialize
+    @settings = @settings = COMPONENT_OPTIONS.baseSystem
   end
   
-  def configure()
-    puts("baseSystem.configure")
+  def alreadyInstalled?
+    return false
+  end
+
+  def canBeInstalled?
+    return true
   end
   
 end

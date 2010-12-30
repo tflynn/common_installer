@@ -87,16 +87,27 @@ class Core
     end
 
     def displayInstallationMenu()
-      puts("\nAvailable Installation Components\n\n")
-      menuEntryFormat = '%d. %s %s'
+      menuEntryFormat = '%d. %s %s %s'
       components = []
       entryPosition = 0
+
+      installationStatuses = {}
+      MENU_ORDER.each do |menuEntry|
+        next if menuEntry == MENU_SEPARATOR
+        installed = getLoadedComponent(menuEntry).alreadyInstalled?
+        if installed
+          installationStatuses[menuEntry] = true
+        end
+      end
+      
+      puts("\nAvailable Installation Components\n\n")
       MENU_ORDER.each do |menuEntry|
         if menuEntry == MENU_SEPARATOR
           puts(menuEntry)
         else
           componentOptions = getComponentOptions(menuEntry)
-          menuOption = menuEntryFormat % [entryPosition + 1 , componentOptions.name, componentOptions.osSpecific.nil? ? '' : "(#{componentOptions.osSpecific} only)"]
+          installed = installationStatuses[menuEntry]
+          menuOption = menuEntryFormat % [entryPosition + 1 , componentOptions.name, componentOptions.osSpecific.nil? ? '' : "(#{componentOptions.osSpecific} only)", installed ? %{(installed in #{componentOptions.buildInstallationDirectory})} : '']
           puts(menuOption)
           entryPosition += 1 
           components << menuEntry
@@ -125,20 +136,21 @@ class Core
       return selectedComponents
     end
     
+    def getLoadedComponent(componentName)
+      return @@registeredComponents[componentName]
+    end
     
     def requireComponent(componentName)
       unless defined?(@@registeredComponents)
         @@registeredComponents = {}
       end
-      newInstance = nil
-      fullyQualifiedCopmonentName = %{components/#{componentName}}
-      loaded  = remoteRequire(fullyQualifiedCopmonentName)
-      if loaded
+      newInstance = @@registeredComponents[componentName]
+      unless newInstance
+        fullyQualifiedCopmonentName = %{components/#{componentName}}
+        remoteRequire(fullyQualifiedCopmonentName)
         newInstanceCmd = %{newInstance = #{fileNameToClassName(componentName)}.new}
         eval(newInstanceCmd)
         @@registeredComponents[componentName] = newInstance
-      else
-        newInstance = @@registeredComponents[componentName]
       end
       return newInstance
     end
@@ -180,6 +192,7 @@ class Core
 
         if currentComponent 
           currentComponent.completeObtainBuildInstallConfigure
+          componentOptions.installed = true
         end
       end
       

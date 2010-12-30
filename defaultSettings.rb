@@ -12,9 +12,8 @@ require 'ostruct'
 ::DEFAULT_BUILD_DIRECTORIES = ['bin','include','lib','man','share']
 
 ::MENU_SEPARATOR = '----------'
-::BUILD_TYPE_GNU = 'gnu'
 
-::MENU_ORDER =  ['baseSystem' , 'dnsServer', 'apacheWebServer', MENU_SEPARATOR , 'readline6' , 'openssl', 'php5' , 'mysql5' ]
+::MENU_ORDER =  ['baseSystem' , 'apacheWebServer', MENU_SEPARATOR , 'readline6' , 'openssl']
 
 
 ::SYSTEM_SETTINGS = OpenStruct.new

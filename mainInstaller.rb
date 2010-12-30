@@ -34,26 +34,6 @@ def remoteRequire(moduleName)
     logger.info(%{Obtaining #{fullModuleName} from #{fullModuleNameURI}})
   end
   
-  # customSettingsFile = File.basename("#{moduleName}Settings")
-  # #puts "remoteRequire customSettingsFile #{customSettingsFile}"
-  # if File.exists?(customSettingsFile)
-  #   #puts "remoteRequire customSettingsFile #{customSettingsFile} exists"
-  #   customSettingsFileAlreadyLoaded = false
-  #   $".each do | loadedFile |
-  #     if loadedFile == customSettingsFile
-  #       #puts "remoteRequire customSettingsFile #{customSettingsFile} already loaded"
-  #       customSettingsFileAlreadyLoaded = true
-  #       break
-  #     end
-  #   end
-  #   unless customSettingsFileAlreadyLoaded
-  #     logger.info(%{Loading settings file #{customSettingsFile}})
-  #     fileContents = IOHelpers.readFile(customSettingsFile)
-  #     $" << customSettingsFile
-  #     eval(fileContents.join("\n"))
-  #   end
-  # end
-  
   return status
   
 end

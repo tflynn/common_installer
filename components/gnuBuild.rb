@@ -45,8 +45,7 @@ class GnuBuild
   end
   
   def alreadyInstalled?
-    logger.fatal("GnuBuild.alreadyInstalled? must be overridden. Leaving ...")
-    Core.errorExit
+    return false
   end
   
   def installNeeded?
