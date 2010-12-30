@@ -10,4 +10,5 @@
 #::COMPONENT_OPTIONS.php5.buildInstallationDirectory = nil
 #::COMPONENT_OPTIONS.mysql5.buildInstallationDirectory = nil
 
+SYSTEM_SETTINGS.modify_shell_startup_file=false
 

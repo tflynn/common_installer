@@ -164,7 +164,6 @@ class GnuBuild
   end
 
   def afterInstall
-    executeWithErrorCheck
   end
   
   def beforeConfigure

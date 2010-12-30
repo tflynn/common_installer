@@ -15,6 +15,7 @@ class Core
       initializeInstaller
       loadSettings
       getGlobalUserChoices
+      preloadComponents
       while true
         @@pass_settings = {}
         userComponentSelections = getUserComponentSelection
@@ -44,8 +45,9 @@ class Core
     
     def getGlobalUserChoices
       puts("\nOptions that apply for all installations\n\n") 
-      
+
       if SYSTEM_SETTINGS.modify_shell_startup_file.nil? 
+
         updateStartupShellsAutomatically = IOHelpers.readKeyboardWithPromptYesNo("Update shell startup files automatically with new PATH and other settings?")
         puts('')
         menuEntryFormat = '%d. Update %s'
@@ -69,15 +71,16 @@ class Core
     
     def updateExternalSettings(options = {})
       if shouldUpdateExternalSettings?
-        puts "Updating external settings"
+        logger.info("System will update external settings in #{SYSTEM_SETTINGS.modify_shell_startup_file}")
       else
-        puts "Won't update external settings"
+        logger.info("System will not update external settings")
       end
     end
     
     def shouldUpdateExternalSettings?
       return (SYSTEM_SETTINGS.modify_shell_startup_file.nil? or SYSTEM_SETTINGS.modify_shell_startup_file == 'none') ? false : true
     end
+    
     
     def getComponentOptions(componentName) 
       return COMPONENT_OPTIONS.send(componentName)
@@ -124,11 +127,19 @@ class Core
     
     
     def requireComponent(componentName)
-      fullyQualifiedCopmonentName = %{components/#{componentName}}
-      remoteRequire(fullyQualifiedCopmonentName)
+      unless defined?(@@registeredComponents)
+        @@registeredComponents = {}
+      end
       newInstance = nil
-      newInstanceCmd = %{newInstance = #{fileNameToClassName(componentName)}.new}
-      eval(newInstanceCmd)
+      fullyQualifiedCopmonentName = %{components/#{componentName}}
+      loaded  = remoteRequire(fullyQualifiedCopmonentName)
+      if loaded
+        newInstanceCmd = %{newInstance = #{fileNameToClassName(componentName)}.new}
+        eval(newInstanceCmd)
+        @@registeredComponents[componentName] = newInstance
+      else
+        newInstance = @@registeredComponents[componentName]
+      end
       return newInstance
     end
     
@@ -139,9 +150,24 @@ class Core
       return fileName
     end
     
+    def preloadComponents
+      components = []
+      ::MENU_ORDER.each do |menuEntry|
+        next if menuEntry == ::MENU_SEPARATOR
+        components << menuEntry
+      end
+      components = components.uniq
+      components.each do |componentName|
+        componentOptions = getComponentOptions(componentName) 
+        currentComponent = requireComponent(componentOptions.componentInstallerName)
+        loadComponentSettings(componentName)
+      end
+    end
+    
     def installComponent(componentName)
       componentOptions = getComponentOptions(componentName) 
-      currentComponent = requireComponent(componentName)
+      currentComponent = requireComponent(componentOptions.componentInstallerName)
+      loadComponentSettings(componentName)
       if currentComponent.canBeInstalled?
         logger.info(%{Installing component #{componentOptions.name}})
 
@@ -157,6 +183,28 @@ class Core
         end
       end
       
+    end
+    
+    def loadComponentSettings(componentName)
+      customSettingsFile = File.basename("#{componentName}Settings")
+      #puts "remoteRequire customSettingsFile #{customSettingsFile}"
+      if File.exists?(customSettingsFile)
+        #puts "remoteRequire customSettingsFile #{customSettingsFile} exists"
+        customSettingsFileAlreadyLoaded = false
+        $".each do | loadedFile |
+          if loadedFile == customSettingsFile
+            #puts "remoteRequire customSettingsFile #{customSettingsFile} already loaded"
+            customSettingsFileAlreadyLoaded = true
+            break
+          end
+        end
+        unless customSettingsFileAlreadyLoaded
+          logger.info(%{Loading settings file #{customSettingsFile}})
+          fileContents = IOHelpers.readFile(customSettingsFile)
+          $" << customSettingsFile
+          eval(fileContents.join("\n"))
+        end
+      end
     end
     
     def normalExit

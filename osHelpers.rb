@@ -45,9 +45,14 @@ class OSHelpers
       tempFile = Tempfile.new("cmdOut")
       almostFullCmd = %{export PATH=#{allPaths} ;  #{cmd} }
       fullCmd = %{#{almostFullCmd} | tee #{tempFile.path}}
-      logger.info("Executing command \"#{almostFullCmd}\"")
-      Kernel.system(fullCmd)
-      status = $?
+      logger.debug("Executing command \"#{almostFullCmd}\"")
+      status = Kernel.system(fullCmd)
+      # If Kernel.system returns a false results, docs say error code is in $?
+      if status == true
+        status = 0
+      else
+        status = $?
+      end
       retVal = status == 0 ? SUCCESS : FAILURE
       cmdOutput = IOHelpers.readFile(tempFile.path)
       File.delete(tempFile.path)
@@ -59,6 +64,15 @@ class OSHelpers
       return results[:status] == 0
     end
     
+    def getCommandLocation(cmd)
+      results = executeCommand("which #{cmd}")
+      if results[:status] == 0
+        commandLocation = results[:commandOutput].first
+        return commandLocation
+      else
+        return nil
+      end
+    end
   end
   
 end

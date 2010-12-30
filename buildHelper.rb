@@ -27,26 +27,32 @@ class BuildHelper
     
     def updateLdconfig(newPath)
       ldConfigFile = '/etc/ld.so.conf'
-      ldConfigBin = 'ldconfig'
+      ldConfigBin = OSHelpers.getCommandLocation('ldconfig')
       systemType = OSHelpers.getSystemType
+      results = nil
       if systemType == SYSTEM_TYPE_LINUX
         if File.exists?(ldConfigFile)
           fileContents = IOHelpers.readFile(ldConfigFile).join("\n")
-          unless fileContents.index(newPath)
+          if fileContents.index(newPath)
+            results = {:status => SUCCESS}
+          else
             logger.info("Adding #{newPath} to ldconfig")
             File.open(ldConfigFile,'a') do |file|
               file.puts(newPath)
             end
-            OSHelpers.executeCommand(ldConfigBin)
+            results = OSHelpers.executeCommand(ldConfigBin)
           end
         end
+      else
+        results = {:status => SUCCESS}
       end
+      return results
     end
     
     def executeCommandWithBuildEnvironment(cmd, settings,options = {})
       fullCmd = nil
       additionalPaths = [%{#{settings.buildInstallationDirectory}/bin}]
-      updateLdconfig(settings.buildInstallationDirectory)
+      updateLdconfig("#{settings.buildInstallationDirectory}/lib")
       if options[:dependencyPaths]
         options[:dependencyPaths].each do |dependencyPath|
           updateLdconfig(dependencyPath)
@@ -103,7 +109,7 @@ class BuildHelper
       if fileName =~ /\.tar\.gz$/
         cmd = %{tar xzf #{fileName}}
         baseFileName = fileName.gsub('.tar.gz','')
-      elseif fileName =~ /\.tgz$/
+      elsif fileName =~ /\.tgz$/
         cmd = %{tar xzf #{fileName}}
         baseFileName = fileName.gsub('.tgz','')
       elsif fileName =~ /\.tar\.bz2$/

@@ -1,28 +1,64 @@
 #!/usr/bin/env jruby
 
+require 'fileutils'
+
+remoteRequire 'installerLogger'
+remoteRequire 'core'
+
 class IOHelpers
   
   class << self
     
     def readFile(fileName,options = {})
-      options = {:skip_comments => true, :skip_empty => true}.merge(options)
-      rawLines = nil
-      File.open(fileName) do |file|
-        rawLines = file.readlines
+      begin
+        options = {:skipComments => true, :skipEmpty => true}.merge(options)
+        rawLines = nil
+        File.open(fileName) do |file|
+          rawLines = file.readlines
+        end
+        lines = []
+        rawLines.each do |rawLine|
+          next if (rawLine =~ /^#/ and options[:skipComments])
+          rawLine = rawLine.chomp.strip
+          next if (rawLine == '' and options[:skipEmpty])
+          lines << rawLine.chomp.strip
+        end
+        return lines
+      rescue Exception => ex
+        logger.error(%{IOHelpers.readFile for #{fileName} failed \n #{ex.to_s} \n #{ex.backtrace.join("\n")}})
+        Core.errorExit
       end
-      lines = []
-      rawLines.each do |rawLine|
-        next if (rawLine =~ /^#/ and options[:skip_comments])
-        rawLine = rawLine.chomp.strip
-        next if (rawLine == '' and options[:skip_empty])
-        lines << rawLine.chomp.strip
-      end
-      return lines
     end
 
     def overwriteFile(fileName, contents, options = {})
-      File.open(fileName,'w') do |file|
-        file.write(contents)
+      begin
+        options = {:backupFile => true }.merge(options)
+        if options[:backupFile]
+          backupFile(fileName)
+        end
+        File.open(fileName,'w') do |file|
+          if contents.kind_of? Array
+            contents.each do |content|
+              file.puts(content)
+            end
+          else
+            file.write(contents)
+          end
+        end
+      rescue Exception => ex
+        logger.error(%{IOHelpers.overwriteFile for #{fileName} failed \n #{ex.to_s} \n #{ex.backtrace.join("\n")}})
+        Core.errorExit
+      end
+    end
+    
+    def backupFile(fileName)
+      begin
+        dateTimeStamp = Time.now.utc.strftime('%Y%m%d%H%M%S')
+        backupFileName = "#{fileName}-#{dateTimeStamp}.bak"
+        FileUtils.cp(fileName,backupFileName)
+      rescue Exception => ex
+        logger.error(%{IOHelpers.backupFile for #{fileName} failed \n #{ex.to_s} \n #{ex.backtrace.join("\n")}})
+        Core.errorExit
       end
     end
     
