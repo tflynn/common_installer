@@ -10,10 +10,12 @@ class NetworkHelper
     
     def getPrimaryIPAddress
       
-      primaryIPAddress = nil
+      primaryIPAddress = ::SYSTEM_SETTINGS.primaryIPAddress
+      return primaryIPAddress unless primaryIPAddress.nil?
+      
       if OSHelpers.isCommmandPresent?('ifconfig')
         osType = OSHelpers.getSystemType
-        results = OSHelpers.executeCommand('ifconfig')
+        results = OSHelpers.executeCommand('ifconfig',{:commandOutput => true})
         cmdOutput = results[:commandOutput]
         if osType == SYSTEM_TYPE_OSX
           primaryIPAddress = parseIfonfigOutput(cmdOutput, 'en0')
@@ -24,6 +26,7 @@ class NetworkHelper
         logger.error("Unable to locate command 'ifconfig'. Leaving ...")
         Core.errorExit
       end
+      ::SYSTEM_SETTINGS.primaryIPAddress = primaryIPAddress
       return primaryIPAddress
       
     end

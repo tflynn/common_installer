@@ -17,11 +17,14 @@ require 'ostruct'
 
 
 ::SYSTEM_SETTINGS = OpenStruct.new
+::SYSTEM_SETTINGS.modify_shell_startup_file=true
+::SYSTEM_SETTINGS.forceUTCClockLinux = true
+::SYSTEM_SETTINGS.forceUTCClockOSX = false
+::SYSTEM_SETTINGS.setPermanentHostName = true
 
 ::LOGGING_OPTIONS = OpenStruct.new
 ::LOGGING_OPTIONS.logLevel='DEBUG'
 ::LOGGING_OPTIONS.consoleLogging=true
-::LOGGING_OPTIONS.fileLogging=true
 ::LOGGING_OPTIONS.logfile=::DEFAULT_LOGFILE_NAME
 
 ::COMPONENT_OPTIONS = OpenStruct.new
@@ -33,6 +36,7 @@ require 'ostruct'
 ::COMPONENT_OPTIONS.baseSystem.distributionGroup = nil
 ::COMPONENT_OPTIONS.baseSystem.distributionFile = nil
 ::COMPONENT_OPTIONS.baseSystem.componentDependencies = nil
+::COMPONENT_OPTIONS.baseSystem.forceReloadOnEveryRestart = false
 
 ::COMPONENT_OPTIONS.readline6 = OpenStruct.new
 ::COMPONENT_OPTIONS.readline6.name = "readline 6"
@@ -40,7 +44,7 @@ require 'ostruct'
 ::COMPONENT_OPTIONS.readline6.buildInstallationDirectory = '/opt2'
 ::COMPONENT_OPTIONS.readline6.distributionGroup = 'readline'
 ::COMPONENT_OPTIONS.readline6.distributionFile = 'readline-6.1.tar.gz'
-::COMPONENT_OPTIONS.readline6.componentDependencies = nil
+::COMPONENT_OPTIONS.readline6.componentDependencies = ['baseSystem']
 
 # MaraDNS configuration
 # ::COMPONENT_OPTIONS.dnsServer = OpenStruct.new
@@ -59,7 +63,7 @@ require 'ostruct'
 ::COMPONENT_OPTIONS.openssl.buildInstallationDirectory = '/opt2'
 ::COMPONENT_OPTIONS.openssl.distributionGroup = 'openssl'
 ::COMPONENT_OPTIONS.openssl.distributionFile = 'openssl-0.9.8q.tar.gz'
-::COMPONENT_OPTIONS.openssl.componentDependencies = ['readline6']
+::COMPONENT_OPTIONS.openssl.componentDependencies = ['baseSystem','readline6']
 ::COMPONENT_OPTIONS.openssl.patchOSX64bitConfiguration=true
 ::COMPONENT_OPTIONS.openssl.patchOSXHeadersForRuby=false
 
@@ -70,7 +74,7 @@ require 'ostruct'
 ::COMPONENT_OPTIONS.dnsServer.buildInstallationDirectory = '/opt2'
 ::COMPONENT_OPTIONS.dnsServer.distributionGroup = 'bind'
 ::COMPONENT_OPTIONS.dnsServer.distributionFile = 'bind-9.7.2-P3.tar.gz'
-::COMPONENT_OPTIONS.dnsServer.componentDependencies = ['readline6','openssl']
+::COMPONENT_OPTIONS.dnsServer.componentDependencies = ['baseSystem','readline6','openssl']
 
 ::COMPONENT_OPTIONS.apacheWebServer = OpenStruct.new
 ::COMPONENT_OPTIONS.apacheWebServer.name = "Apache Web Server"
@@ -78,7 +82,7 @@ require 'ostruct'
 ::COMPONENT_OPTIONS.apacheWebServer.buildInstallationDirectory = nil
 ::COMPONENT_OPTIONS.apacheWebServer.distributionGroup = nil
 ::COMPONENT_OPTIONS.apacheWebServer.distributionFile = nil
-::COMPONENT_OPTIONS.apacheWebServer.componentDependencies = nil
+::COMPONENT_OPTIONS.apacheWebServer.componentDependencies = ['baseSystem']
 
 ::COMPONENT_OPTIONS.php5 = OpenStruct.new
 ::COMPONENT_OPTIONS.php5.name = "PHP 5"
@@ -86,7 +90,7 @@ require 'ostruct'
 ::COMPONENT_OPTIONS.php5.buildInstallationDirectory = nil
 ::COMPONENT_OPTIONS.php5.distributionGroup = nil
 ::COMPONENT_OPTIONS.php5.distributionFile = nil
-::COMPONENT_OPTIONS.php5.componentDependencies = nil
+::COMPONENT_OPTIONS.php5.componentDependencies = ['apacheWebServer']
 
 ::COMPONENT_OPTIONS.mysql5 = OpenStruct.new
 ::COMPONENT_OPTIONS.mysql5.name = "MYSQL 5"
@@ -94,4 +98,4 @@ require 'ostruct'
 ::COMPONENT_OPTIONS.mysql5.buildInstallationDirectory = nil
 ::COMPONENT_OPTIONS.mysql5.distributionGroup = nil
 ::COMPONENT_OPTIONS.mysql5.distributionFile = nil
-::COMPONENT_OPTIONS.mysql5.componentDependencies = nil
+::COMPONENT_OPTIONS.mysql5.componentDependencies = ['baseSystem']

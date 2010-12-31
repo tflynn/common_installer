@@ -11,7 +11,7 @@ class CommandLine
         while args.size > 0
           currentArg = args.shift
           # Skip any options to do with logging
-          next if currentArg =~ /logfile/ or currentArg =~ /consoleLogging/ or currentArg =~ /fileLogging/
+          next if currentArg =~ /logfile/ or currentArg =~ /consoleLogging/
         end
       end
     end

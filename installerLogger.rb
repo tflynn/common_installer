@@ -16,14 +16,13 @@ class InstallerLogger
 
   LEVELS_TEXT = ['TRACE', 'DEBUG' , 'INFO', 'WARN', 'ERROR', 'FATAL']
 
-  attr_reader :consoleLogging, :fileLogging
+  attr_reader :consoleLogging
   
   def initialize
     begin
       @currentLogLevel = LEVEL_DEBUG
       @currentFileName = File.expand_path(::DEFAULT_LOGFILE_NAME)
       @consoleLogging = true
-      @fileLogging = true
       
       processCustomSettings
       processCommandLineOptions
@@ -49,8 +48,6 @@ class InstallerLogger
             @currentLogLevel = level if level
           elsif setting == 'consoleLogging'
             @consoleLogging = value.downcase == 'true'
-          elsif setting == 'fileLogging'
-            @fileLogging = value.downcase == 'true'
           elsif setting == 'logfile'
             @currentFileName = File.expand_path(value)
           end
@@ -72,8 +69,6 @@ class InstallerLogger
             @currentLogLevel = level if level
           elsif setting == 'consoleLogging'
             @consoleLogging = value.downcase == 'true'
-          elsif setting == 'fileLogging'
-            @fileLogging = value.downcase == 'true'
           elsif setting == 'logfile'
             @currentFileName = File.expand_path(value)
           end
@@ -121,10 +116,8 @@ class InstallerLogger
     if @consoleLogging
       puts(fullMsg)
     end
-    if @fileLogging
-      File.open(getFileName,'a') do |logfile|
-        logfile.puts(fullMsg)
-      end
+    File.open(getFileName,'a') do |logfile|
+      logfile.puts(fullMsg)
     end
     return true
   end

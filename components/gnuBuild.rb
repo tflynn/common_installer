@@ -70,7 +70,6 @@ class GnuBuild
         status = results[:status]
         errorMsg = results[:errorMsg]
         if status == FAILURE
-          # TODO mes
           logger.error("#{errorMsg}. Exiting ...")
           Core.errorExit
         end
@@ -81,7 +80,6 @@ class GnuBuild
   end
   
   def beforeGetDistribution
-    executeWithErrorCheck
   end
   
   def getDistribution
@@ -93,11 +91,9 @@ class GnuBuild
   end
   
   def afterGetDistribution
-    executeWithErrorCheck
   end
   
   def beforeUnpackDistribution
-    executeWithErrorCheck
   end
 
   def unpackDistribution
@@ -110,11 +106,9 @@ class GnuBuild
   end
 
   def afterUnpackDistribution
-    executeWithErrorCheck
   end
   
   def beforeConfigureBuild
-    executeWithErrorCheck
   end
   
   def configureBuild
@@ -130,11 +124,9 @@ class GnuBuild
   end
   
   def afterConfigureBuild
-    executeWithErrorCheck
   end
 
   def beforeMake
-    executeWithErrorCheck
   end
   
   def make
@@ -146,12 +138,10 @@ class GnuBuild
   end
   
   def afterMake
-    executeWithErrorCheck
   end
      
      
   def beforeInstall
-    executeWithErrorCheck
   end
   
   def install
@@ -166,15 +156,12 @@ class GnuBuild
   end
   
   def beforeConfigure
-    executeWithErrorCheck
   end
 
   def configure
-    executeWithErrorCheck
   end
   
   def afterConfigure
-    executeWithErrorCheck
   end
   
   def beforeRun

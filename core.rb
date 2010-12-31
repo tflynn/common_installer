@@ -11,7 +11,6 @@ class Core
     
     def runInstaller
       initializeInstaller
-      loadSettings
       getGlobalUserChoices
       preloadComponents
       while true
@@ -24,9 +23,9 @@ class Core
     end
     
     def initializeInstaller 
+      loadSettings
+      setLoggingSettings
       CommandLine.parseOptions(ARGV)
-      # logger.addConsoleAppender
-      # logger.addFileAppender(CommandLine.getLogFileName)
       unless File.exists?('components')
         Kernel.system('mkdir components')
       end
@@ -39,6 +38,10 @@ class Core
         logger.info(%{Loading settings file #{::CUSTOM_SETTINGS_FILE}})
         eval(fileContents.join("\n"))
       end
+    end
+    
+    def setLoggingSettings
+      #TODO set true logging settings
     end
     
     def getGlobalUserChoices
@@ -105,7 +108,10 @@ class Core
         else
           componentOptions = getComponentOptions(menuEntry)
           installed = installationStatuses[menuEntry]
-          menuOption = menuEntryFormat % [entryPosition + 1 , componentOptions.name, componentOptions.osSpecific.nil? ? '' : "(#{componentOptions.osSpecific} only)", installed ? %{(installed in #{componentOptions.buildInstallationDirectory})} : '']
+          osSpecific = componentOptions.osSpecific.nil? ? '' : "(#{componentOptions.osSpecific} only)"
+          installedDirectoryMsg = componentOptions.buildInstallationDirectory.nil? ?  '' : %{ in #{componentOptions.buildInstallationDirectory}}
+          installedMsg = installed ? %{(installed#{installedDirectoryMsg})} : ''
+          menuOption = menuEntryFormat % [entryPosition + 1 , componentOptions.name, osSpecific, installedMsg]
           puts(menuOption)
           entryPosition += 1 
           components << menuEntry
@@ -135,20 +141,23 @@ class Core
     end
     
     def getLoadedComponent(componentName)
-      return @@registeredComponents[componentName]
+      unless defined?( @@registeredInstances)
+        @@registeredInstances = {}
+      end
+      return @@registeredInstances[componentName]
     end
     
     def requireComponent(componentName)
-      unless defined?(@@registeredComponents)
-        @@registeredComponents = {}
+      unless defined?( @@registeredInstances)
+        @@registeredInstances = {}
       end
-      newInstance = @@registeredComponents[componentName]
+      newInstance =  @@registeredInstances[componentName]
       unless newInstance
         fullyQualifiedCopmonentName = %{components/#{componentName}}
         remoteRequire(fullyQualifiedCopmonentName)
         newInstanceCmd = %{newInstance = #{fileNameToClassName(componentName)}.new}
         eval(newInstanceCmd)
-        @@registeredComponents[componentName] = newInstance
+        @@registeredInstances[componentName] = newInstance
       end
       return newInstance
     end
@@ -197,23 +206,17 @@ class Core
     end
     
     def loadComponentSettings(componentName)
+      unless defined?(@@loadededSettings)
+        @@loadedSettings = {}
+      end
       customSettingsFile = File.basename("#{componentName}Settings")
       #puts "remoteRequire customSettingsFile #{customSettingsFile}"
       if File.exists?(customSettingsFile)
-        #puts "remoteRequire customSettingsFile #{customSettingsFile} exists"
-        customSettingsFileAlreadyLoaded = false
-        $".each do | loadedFile |
-          if loadedFile == customSettingsFile
-            #puts "remoteRequire customSettingsFile #{customSettingsFile} already loaded"
-            customSettingsFileAlreadyLoaded = true
-            break
-          end
-        end
-        unless customSettingsFileAlreadyLoaded
+        unless @@loadedSettings[customSettingsFile]
           logger.info(%{Loading settings file #{customSettingsFile}})
           fileContents = IOHelpers.readFile(customSettingsFile)
-          $" << customSettingsFile
           eval(fileContents.join("\n"))
+          @@loadedSettings[customSettingsFile] = true
         end
       end
     end

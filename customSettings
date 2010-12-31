@@ -7,13 +7,16 @@
 
 ::LOGGING_OPTIONS.logLevel='INFO'
 ::LOGGING_OPTIONS.consoleLogging=false
-::LOGGING_OPTIONS.fileLogging=true
 #::LOGGING_OPTIONS.logfile='bootstrap_installer.log'
 
+::SYSTEM_SETTINGS.modify_shell_startup_file=false
+#::SYSTEM_SETTINGS.forceUTCClockLinux=true
+#::SYSTEM_SETTINGS.forceUTCClockOSX = false
+#::SYSTEM_SETTINGS.setPermanentHostName = true
+
+#::COMPONENT_OPTIONS.readline6.buildInstallationDirectory = '/opt2'
+#::COMPONENT_OPTIONS.openssl.buildInstallationDirectory = '/opt2'
 #::COMPONENT_OPTIONS.dnsServer.buildInstallationDirectory = '/opt2'
 #::COMPONENT_OPTIONS.apacheWebServer.buildInstallationDirectory = nil
-#::COMPONENT_OPTIONS.php5.buildInstallationDirectory = nil
-#::COMPONENT_OPTIONS.mysql5.buildInstallationDirectory = nil
 
-SYSTEM_SETTINGS.modify_shell_startup_file=false
 

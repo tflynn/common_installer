@@ -518,7 +518,7 @@ function installGnuPackage() {
     curl -o $fullFileName $fileURI
   fi
   if [[ X${fetchType} == Xwget ||  X${fetchType} == X ]] ; then
-    wget $fileURI
+    wget -q $fileURI
   fi
   unpack $fullFileName
   pushd $fileName
@@ -723,7 +723,7 @@ function ensureJRubyPresent() {
   fi
   if [[ ${installJRuby} == $TRUE ]] ; then
     infoMsg "Installing JRuby package  ${JRUBY_DIST} from ${BOOTSTRAP_INSTALLER_SOURCE_REPOSITORY}/jruby/${JRUBY_DIST}"
-    wget ${BOOTSTRAP_INSTALLER_SOURCE_REPOSITORY}/jruby/${JRUBY_DIST}
+    wget -q ${BOOTSTRAP_INSTALLER_SOURCE_REPOSITORY}/jruby/${JRUBY_DIST}
     if [[ $? !=  0 ]] ; then
       errorMsg "Unable to fetch JRuby from ${BOOTSTRAP_INSTALLER_SOURCE_REPOSITORY}/jruby/${JRUBY_DIST}. Please install JRuby 1.5.6 manually and rerun this installer. Leaving ..."
       exit 1
@@ -749,7 +749,7 @@ function getAndRunJRubyInstaller() {
   else
     infoMsg "Obtaining mainInstaller.rb from ${BOOTSTRAP_INSTALLER_SOURCE_REPOSITORY}/common_installer/mainInstaller.rb"
     rm -rf mainInstaller.rb
-    wget ${BOOTSTRAP_INSTALLER_SOURCE_REPOSITORY}/common_installer/mainInstaller.rb > /dev/null 2>&1
+    wget -q ${BOOTSTRAP_INSTALLER_SOURCE_REPOSITORY}/common_installer/mainInstaller.rb > /dev/null 2>&1
     if [[ $? != 0 ]] ; then
       errorMsg "Unable to execute command \"wget ${BOOTSTRAP_INSTALLER_SOURCE_REPOSITORY}common_installer/mainInstaller.rb\". Leaving ..."
       exit 1
@@ -761,7 +761,7 @@ function getAndRunJRubyInstaller() {
   
   echo "#!/usr/bin/env bash" > ./runInstaller
   echo "export PATH="${PATH} >> ./runInstaller
-  echo "jruby -s ./mainInstaller.rb logfile=${BOOTSTRAP_INSTALLER_LOG_FILENAME}" >> ./runInstaller
+  echo "jruby -s ./mainInstaller.rb logfile=${BOOTSTRAP_INSTALLER_LOG_FILENAME} \$@" >> ./runInstaller
   chmod 0755 ./runInstaller
   exec ./runInstaller
 }

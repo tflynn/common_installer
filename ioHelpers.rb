@@ -84,6 +84,13 @@ class IOHelpers
       end
     end
     
+    def readKeyboardWithResponseWithPrompt(prompt)
+      while true
+        input = readKeyboardWithPrompt(prompt)
+        return input if input != ''
+      end
+    end
+    
   end
 
 end

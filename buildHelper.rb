@@ -87,7 +87,7 @@ class BuildHelper
           if File.exists?(distributionFile)
             File.delete(distributionFile)
           end
-          cmd = %{wget #{distributionFileURI}}
+          cmd = %{wget -q #{distributionFileURI}}
           results = OSHelpers.executeCommand(cmd)
           retVal = results[:retVal]
         end
