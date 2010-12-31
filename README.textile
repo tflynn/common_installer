@@ -15,7 +15,7 @@ p. The system is written in two phases:
 
 h2. Running the installer
 
-A suggestion. Create a new directory and copy the installer script ('bootstrap_installer') into it. The system creates (a few) files for its own use, in particular, the file 'bootstrap_installer.log' which records all changes to the system.
+A suggestion. Create a new directory and copy the installer script ('bootstrap_installer') into it. The installer system creates and downloads a number of files for its own use. In particular, the file 'bootstrap_installer.log' which records all changes to the system.
 
 Obtain a copy of the bootstrap installer - a single file.
 

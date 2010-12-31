@@ -116,6 +116,7 @@ class BaseSystem < GnuBuild
           end
         end
         IOHelpers.overwriteFile('/etc/sysconfig/ntpd',outputLines)
+        logger.info("Component baseSystem: Updating /etc/sysconfig/ntpd")
         #Restart service
         OSHelpers.executeCommand('/sbin/service ntpd start')
       else
@@ -147,12 +148,13 @@ class BaseSystem < GnuBuild
         hostName = IOHelpers.IOHelpers.readKeyboardWithResponseWithPrompt(%{Enter host name})
         ::SYSTEM_SETTINGS.hostName = hostName
          OSHelpers.executeCommand("scutil –set HostName #{hostName}")
+         logger.info("Component baseSystem: Setting permanent hostname to #{hostName}")
       end
     elsif systemType == SYSTEM_TYPE_LINUX
       if ::SYSTEM_SETTINGS.setPermanentHostName
         linuxSystemType = OSHelpers.getLinuxTypeAndVersion[:type]
         hostName = IOHelpers.readKeyboardWithResponseWithPrompt(%{Enter host name})
-        logger.info("Setting permanent hostname to #{hostName}")
+        logger.info("Component baseSystem: Setting permanent hostname to #{hostName}")
         ::SYSTEM_SETTINGS.hostName = hostName
         if linuxSystemType == LINUX_TYPE_REDHAT or linuxSystemType == LINUX_TYPE_CENTOS or linuxSystemType == LINUX_TYPE_FEDORA
           #/etc/sysconfig/network
@@ -166,6 +168,7 @@ class BaseSystem < GnuBuild
             end
           end
           IOHelpers.overwriteFile('/etc/sysconfig/network',outputLines)
+          logger.info("Component baseSystem: Updating /etc/sysconfig/network with new host name")
         elsif linuxSystemType == LINUX_TYPE_DEBIAN or linuxSystemType == LINUX_TYPE_UBUNTU
           outputLines = [hostname]
           IOHelpers.overwriteFile('/etc/hostname',outputLines)
@@ -174,6 +177,7 @@ class BaseSystem < GnuBuild
       # Make sure it's set right now for the local session - the preceeding sets up hostname on a reboot
       if hostName
         OSHelpers.executeCommand("hostname #{hostName}")
+        logger.info("Component baseSystem: Updating hostname for session")
       end
     end
     
@@ -200,6 +204,7 @@ class BaseSystem < GnuBuild
         outputLines << "#{primaryIPAddress}    #{hostName}"
       end
       IOHelpers.overwriteFile('/etc/hosts',outputLines)
+      logger.info("Component baseSystem: Adding '#{primaryIPAddress}    #{hostName}' to /etc/hosts")
     end
     
   end

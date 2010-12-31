@@ -44,6 +44,7 @@ class InstallerLogger
           setting = setting.chomp.strip.sub('::LOGGING_OPTIONS.','')
           value = value.chomp.strip
           if setting == 'logLevel'
+            value = value.upcase.gsub(/\'/,'')
             level = LEVELS_TEXT.index(value.upcase)
             @currentLogLevel = level if level
           elsif setting == 'consoleLogging'
@@ -65,6 +66,7 @@ class InstallerLogger
           setting = setting.chomp
           value = value.chomp.strip
           if setting == 'logLevel'
+            value = value.upcase.gsub(/\'/,'')
             level = LEVELS_TEXT.index(value.upcase)
             @currentLogLevel = level if level
           elsif setting == 'consoleLogging'
