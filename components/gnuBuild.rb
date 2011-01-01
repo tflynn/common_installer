@@ -41,7 +41,11 @@ class GnuBuild
   end
   
   def canBeInstalled?
-    return true
+    if @settings and (@settings.enabled.nil? or @settings.enabled)
+      return true
+    else
+      return false
+    end
   end
   
   def alreadyInstalled?
@@ -153,6 +157,9 @@ class GnuBuild
   end
 
   def afterInstall
+    if @settings.buildInstallationDirectory
+      BuildHelper.updateLdconfig("#{@settings.buildInstallationDirectory}/lib")
+    end
   end
   
   def beforeConfigure

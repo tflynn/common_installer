@@ -17,6 +17,8 @@ LINUX_TYPE_UBUNTU='ubuntu'
 LINUX_TYPE_FEDORA='fedora'
 LINUX_TYPE_UNKNOWN='unknown'
 
+LINUX_TYPES_SUPPORTED = [LINUX_TYPE_REDHAT,LINUX_TYPE_CENTOS]
+
 # Redhat-derived
 LINUX_INSTALLER_YUM='yum'
 LINUX_INSTALLER_RPM='rpm'
@@ -47,10 +49,6 @@ class OSHelpers
           systemType = SYSTEM_TYPE_OSX
         end
       end
-      if systemType == nil then
-        systemType = SYSTEM_TYPE_UNKNOWN
-      end
-
       ::SYSTEM_SETTINGS.systemType = systemType
       return systemType
     end

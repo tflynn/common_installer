@@ -80,6 +80,7 @@ class Openssl < GnuBuild
   end
 
   def afterInstall
+    super
     if @settings.patchOSXHeadersForRuby
       systemType = OSHelpers.getSystemType
       errorMsg = nil

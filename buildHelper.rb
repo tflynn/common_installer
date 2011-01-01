@@ -32,11 +32,19 @@ class BuildHelper
       results = nil
       if systemType == SYSTEM_TYPE_LINUX
         if File.exists?(ldConfigFile)
-          fileContents = IOHelpers.readFile(ldConfigFile).join("\n")
-          if fileContents.index(newPath)
+          matchingEntryFound = false
+          fileContents = IOHelpers.readFile(ldConfigFile)
+          fileContents.each do |line|
+            if line == newPath
+              matchingEntryFound = true
+              break
+            end
+          end
+          if matchingEntryFound
+            logger.info("ldconfig: #{ldConfigFile} already contains #{newPath}")
             results = {:status => SUCCESS}
           else
-            logger.info("Adding #{newPath} to ldconfig")
+            logger.info("ldconfig:  Adding #{newPath} to #{ldConfigFile}")
             File.open(ldConfigFile,'a') do |file|
               file.puts(newPath)
             end
@@ -52,10 +60,8 @@ class BuildHelper
     def executeCommandWithBuildEnvironment(cmd, settings,options = {})
       fullCmd = nil
       additionalPaths = [%{#{settings.buildInstallationDirectory}/bin}]
-      updateLdconfig("#{settings.buildInstallationDirectory}/lib")
       if options[:dependencyPaths]
         options[:dependencyPaths].each do |dependencyPath|
-          updateLdconfig(dependencyPath)
           additionalPaths << "#{dependencyPath}/bin"
         end
       end

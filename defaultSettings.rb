@@ -13,7 +13,7 @@ require 'ostruct'
 
 ::MENU_SEPARATOR = '----------'
 
-::MENU_ORDER =  ['baseSystem' , 'apacheWebServer', MENU_SEPARATOR , 'readline6' , 'openssl']
+::MENU_ORDER =  ['baseSystem' , MENU_SEPARATOR , 'readline6' , 'openssl']
 
 
 ::SYSTEM_SETTINGS = OpenStruct.new

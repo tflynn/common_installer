@@ -3,6 +3,7 @@
 remoteRequire 'commandLine'
 remoteRequire 'installerLogger'
 remoteRequire 'ioHelpers'
+remoteRequire 'osHelpers'
 
 class Core
   
@@ -11,13 +12,46 @@ class Core
     
     def runInstaller
       initializeInstaller
-      getGlobalUserChoices
       preloadComponents
+      checkSystemSupported
+      getGlobalUserChoices
       while true
         @@pass_settings = {}
         userComponentSelections = getUserComponentSelection
         userComponentSelections.each do | userComponentSelection|
           installComponent(userComponentSelection)
+        end
+      end
+    end
+    
+    def checkSystemSupported
+      systemType = OSHelpers.getSystemType
+      if systemType == SYSTEM_TYPE_UNKNOWN then
+        msg = "Unknown system type. Leaving ..."
+        unless logger.consoleLogging
+          puts msg
+        end
+        logger.error(msg)
+        errorExit
+      end
+      if systemType == SYSTEM_TYPE_LINUX
+        linuxTypeAndVersion = OSHelpers.getLinuxTypeAndVersion
+        linuxType = linuxTypeAndVersion[:type]
+        if linuxType == LINUX_TYPE_UNKNOWN
+          msg = "Unknown Linux system type. Leaving ..."
+          unless logger.consoleLogging
+            puts msg
+          end
+          logger.error(msg)
+          errorExit
+        end
+        unless LINUX_TYPES_SUPPORTED.index(linuxType)
+          msg = "Unsupported Linux type '#{linuxType}'. Leaving ..."
+          unless logger.consoleLogging
+            puts msg
+          end
+          logger.error(msg)
+          errorExit
         end
       end
     end
@@ -88,7 +122,7 @@ class Core
     end
 
     def displayInstallationMenu()
-      menuEntryFormat = '%d. %s %s %s'
+      menuEntryFormat = '%d. %s %s %s %s'
       components = []
       entryPosition = 0
 
@@ -107,11 +141,13 @@ class Core
           puts(menuEntry)
         else
           componentOptions = getComponentOptions(menuEntry)
+          component = getLoadedComponent(menuEntry)
           installed = installationStatuses[menuEntry]
           osSpecific = componentOptions.osSpecific.nil? ? '' : "(#{componentOptions.osSpecific} only)"
           installedDirectoryMsg = componentOptions.buildInstallationDirectory.nil? ?  '' : %{ in #{componentOptions.buildInstallationDirectory}}
           installedMsg = installed ? %{(installed#{installedDirectoryMsg})} : ''
-          menuOption = menuEntryFormat % [entryPosition + 1 , componentOptions.name, osSpecific, installedMsg]
+          enabledMsg = component.canBeInstalled? ? '' : '(disabled)'
+          menuOption = menuEntryFormat % [entryPosition + 1 , componentOptions.name, osSpecific, installedMsg, enabledMsg]
           puts(menuOption)
           entryPosition += 1 
           components << menuEntry
@@ -188,7 +224,7 @@ class Core
       currentComponent = requireComponent(componentOptions.componentInstallerName)
       loadComponentSettings(componentName)
       if currentComponent.canBeInstalled?
-        logger.info(%{Installing component #{componentOptions.name}})
+        logger.info(%{Installing component '#{componentOptions.name}'})
 
         componentDependencies = componentOptions.componentDependencies
         if componentDependencies
@@ -201,6 +237,8 @@ class Core
           currentComponent.completeObtainBuildInstallConfigure
           componentOptions.installed = true
         end
+      else
+        logger.info(%{Component '#{componentOptions.name}' disabled. Skipping install ...})
       end
       
     end
