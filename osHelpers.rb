@@ -124,27 +124,24 @@ class OSHelpers
       almostFullCmd = %{export PATH=#{allPaths} ;  #{cmd} }
       logger.debug("Executing command \"#{almostFullCmd}\"")
       tempFile = Tempfile.new("cmdOut")
-      cmdOutput = nil
-      saveOutput = true
-      saveOutput = false if logger.consoleLogging
-      saveOutput = true if options[:commandOutput]
-      if saveOutput
-        fullCmd = %{#{almostFullCmd} >#{tempFile.path} 2>&1}
+      if logger.consoleLogging
+        fullCmd = %{export PATH=#{allPaths} ; ( #{cmd} 2>&1 ; echo $? >status.tmp ) | tee #{tempFile.path} }
+        Kernel.system(fullCmd)
+        status = IO.read('status.tmp').strip.chomp.to_i 
+        File.delete('status.tmp')
       else
-        fullCmd = %{#{almostFullCmd} }
-      end
-      status = Kernel.system(fullCmd)
-      if saveOutput
-        cmdOutput = IO.read(tempFile.path)
-        File.open(logger.getFileName,'a') do |logfile|
-          logfile.write(cmdOutput)
+        fullCmd = %{#{almostFullCmd} >#{tempFile.path} 2>&1}
+        status = Kernel.system(fullCmd)
+        # If Kernel.system returns a false results, docs say error code is in $?
+        if status == true
+          status = 0
+        else
+          status = $?
         end
       end
-      # If Kernel.system returns a false results, docs say error code is in $?
-      if status == true
-        status = 0
-      else
-        status = $?
+      cmdOutput = IO.read(tempFile.path)
+      File.open(logger.getFileName,'a') do |logfile|
+        logfile.write(cmdOutput)
       end
       retVal = status == 0 ? SUCCESS : FAILURE
       File.delete(tempFile.path)
