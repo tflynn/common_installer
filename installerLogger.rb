@@ -22,7 +22,7 @@ class InstallerLogger
     begin
       @currentLogLevel = LEVEL_DEBUG
       @currentFileName = File.expand_path(::DEFAULT_LOGFILE_NAME)
-      @consoleLogging = true
+      @consoleLogging = false
       
       processCustomSettings
       processCommandLineOptions

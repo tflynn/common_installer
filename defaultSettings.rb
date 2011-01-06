@@ -13,7 +13,7 @@ require 'ostruct'
 
 ::MENU_SEPARATOR = '----------'
 
-::MENU_ORDER =  ['baseSystem' , MENU_SEPARATOR , 'readline6' , 'openssl']
+::MENU_ORDER =  ['baseSystem' , 'dnsServer', 'chefServer', 'chefClient' , MENU_SEPARATOR , 'readline6' , 'openssl']
 
 
 ::SYSTEM_SETTINGS = OpenStruct.new
@@ -24,13 +24,14 @@ require 'ostruct'
 
 ::LOGGING_OPTIONS = OpenStruct.new
 ::LOGGING_OPTIONS.logLevel='DEBUG'
-::LOGGING_OPTIONS.consoleLogging=true
+::LOGGING_OPTIONS.consoleLogging=false
 ::LOGGING_OPTIONS.logfile=::DEFAULT_LOGFILE_NAME
 
 ::COMPONENT_OPTIONS = OpenStruct.new
 
 ::COMPONENT_OPTIONS.baseSystem = OpenStruct.new
 ::COMPONENT_OPTIONS.baseSystem.name = "Basic System"
+::COMPONENT_OPTIONS.baseSystem.enabled = false
 ::COMPONENT_OPTIONS.baseSystem.componentInstallerName = "baseSystem"
 ::COMPONENT_OPTIONS.baseSystem.buildInstallationDirectory = nil
 ::COMPONENT_OPTIONS.baseSystem.distributionGroup = nil
@@ -39,7 +40,7 @@ require 'ostruct'
 ::COMPONENT_OPTIONS.baseSystem.forceReloadOnEveryRestart = false
 
 ::COMPONENT_OPTIONS.readline6 = OpenStruct.new
-::COMPONENT_OPTIONS.readline6.name = "readline 6"
+::COMPONENT_OPTIONS.readline6.name = "readline 6 (6.1)"
 ::COMPONENT_OPTIONS.readline6.componentInstallerName = "readline6"
 ::COMPONENT_OPTIONS.readline6.buildInstallationDirectory = '/opt2'
 ::COMPONENT_OPTIONS.readline6.distributionGroup = 'readline'
@@ -58,7 +59,7 @@ require 'ostruct'
 
 # Primary OpenSSL configuration
 ::COMPONENT_OPTIONS.openssl = OpenStruct.new
-::COMPONENT_OPTIONS.openssl.name = "OpenSSL"
+::COMPONENT_OPTIONS.openssl.name = "OpenSSL (0.9.8q)"
 ::COMPONENT_OPTIONS.openssl.componentInstallerName = "openssl"
 ::COMPONENT_OPTIONS.openssl.buildInstallationDirectory = '/opt2'
 ::COMPONENT_OPTIONS.openssl.distributionGroup = 'openssl'
@@ -69,12 +70,34 @@ require 'ostruct'
 
 # Bind configuration
 ::COMPONENT_OPTIONS.dnsServer = OpenStruct.new
-::COMPONENT_OPTIONS.dnsServer.name = "DNS Server (Bind)"
+::COMPONENT_OPTIONS.dnsServer.name = "DNS Server (Bind 9.7.2-P3)"
 ::COMPONENT_OPTIONS.dnsServer.componentInstallerName = "dnsServer"
 ::COMPONENT_OPTIONS.dnsServer.buildInstallationDirectory = '/opt2'
 ::COMPONENT_OPTIONS.dnsServer.distributionGroup = 'bind'
 ::COMPONENT_OPTIONS.dnsServer.distributionFile = 'bind-9.7.2-P3.tar.gz'
 ::COMPONENT_OPTIONS.dnsServer.componentDependencies = ['baseSystem','readline6','openssl']
+
+###
+# Chef components
+###
+
+# Chef Client
+::COMPONENT_OPTIONS.chefClient = OpenStruct.new
+::COMPONENT_OPTIONS.chefClient.name = "Chef Client"
+::COMPONENT_OPTIONS.chefClient.componentInstallerName = "chefClient"
+::COMPONENT_OPTIONS.chefClient.buildInstallationDirectory = '/opt2'
+::COMPONENT_OPTIONS.chefClient.distributionGroup = 'chef'
+::COMPONENT_OPTIONS.chefClient.distributionFile = ''
+::COMPONENT_OPTIONS.chefClient.componentDependencies = ['baseSystem']
+
+# Chef Server
+::COMPONENT_OPTIONS.chefServer = OpenStruct.new
+::COMPONENT_OPTIONS.chefServer.name = "Chef Server"
+::COMPONENT_OPTIONS.chefServer.componentInstallerName = "chefServer"
+::COMPONENT_OPTIONS.chefServer.buildInstallationDirectory = '/opt2'
+::COMPONENT_OPTIONS.chefServer.distributionGroup = 'chef'
+::COMPONENT_OPTIONS.chefServer.distributionFile = ''
+::COMPONENT_OPTIONS.chefServer.componentDependencies = ['baseSystem']
 
 ::COMPONENT_OPTIONS.apacheWebServer = OpenStruct.new
 ::COMPONENT_OPTIONS.apacheWebServer.name = "Apache Web Server"

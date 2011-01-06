@@ -148,8 +148,14 @@ class OSHelpers
       return {:status => status , :fullCommand => almostFullCmd, :commandOutput => cmdOutput , :retVal => retVal }
     end
     
-    def isCommmandPresent?(cmd)
-      results = executeCommand("which #{cmd}")
+    def isCommmandPresent?(cmd,options = {})
+      additionalPaths = []
+      if options[:dependencyPaths] 
+        options[:dependencyPaths].each do |dependencyPath|
+          additionalPaths << dependencyPath
+        end
+      end
+      results = executeCommand("which #{cmd}",{:additionalPaths => additionalPaths })
       return results[:status] == 0
     end
 
@@ -162,8 +168,14 @@ class OSHelpers
       return commandOutput.index(cmd) != nil
     end
     
-    def getCommandLocation(cmd)
-      results = executeCommand("which #{cmd}" , {:commandOutput => true })
+    def getCommandLocation(cmd,options = {})
+      additionalPaths = []
+      if options[:dependencyPaths]
+        options[:dependencyPaths].each do |dependencyPath|
+          additionalPaths << dependencyPath
+        end
+      end
+      results = executeCommand("which #{cmd}" , {:commandOutput => true, :additionalPaths => additionalPaths  })
       if results[:status] == 0
         commandLocation = results[:commandOutput].first
         return commandLocation

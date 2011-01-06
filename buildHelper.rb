@@ -48,9 +48,10 @@ class BuildHelper
             File.open(ldConfigFile,'a') do |file|
               file.puts(newPath)
             end
-            results = OSHelpers.executeCommand(ldConfigBin)
+            results = {:status => SUCCESS}
           end
         end
+        OSHelpers.executeCommand(ldConfigBin)
       else
         results = {:status => SUCCESS}
       end
